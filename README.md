@@ -27,6 +27,17 @@ A minimal multi-tenant SaaS inventory management system built as a 6-hour MVP.
 - Node.js 18+ (works on Windows, macOS, Linux)
 - A running MongoDB instance (local `mongodb://127.0.0.1:27017` or MongoDB Atlas URI)
 
+## Optional: run MongoDB in Docker
+
+If you don't want to install MongoDB on your machine:
+
+```bash
+docker compose up -d     # starts a mongo:7 container on localhost:27017
+docker compose down      # stops it when done
+```
+
+Then set `MONGO_URI=mongodb://127.0.0.1:27017/stockflow` in `server/.env`.
+
 ## Quick start (one command)
 
 ```bash

@@ -1,0 +1,23 @@
+# Convenience stack for local dev: just MongoDB.
+# The server and client run from the host (nodemon / Vite) and connect to this.
+#
+# Usage:
+#   docker compose up -d        # start Mongo in the background
+#   docker compose down         # stop it
+#
+# Then point server/.env MONGO_URI at:
+#   mongodb://127.0.0.1:27017/stockflow
+#
+# Cross-platform: works on macOS, Linux and Windows with Docker Desktop.
+services:
+  mongo:
+    image: mongo:7
+    container_name: stockflow-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - stockflow_mongo_data:/data/db
+
+volumes:
+  stockflow_mongo_data:
