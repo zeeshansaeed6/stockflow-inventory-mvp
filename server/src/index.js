@@ -10,9 +10,12 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 
 const connectDB = require('./config/db');
+const { seedDemo } = require('./config/seed');
 
 // Route modules
 const authRoutes = require('./routes/auth');
@@ -23,6 +26,7 @@ const settingsRoutes = require('./routes/settings');
 const app = express();
 
 // ---- Middleware ---------------------------------------------------------
+app.use(helmet());
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
@@ -34,6 +38,18 @@ app.use(express.json());
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
+
+// Throttle auth endpoints: slows down brute-force login attempts.
+app.use(
+  '/api/auth',
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 50,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many auth attempts, please try again later.' },
+  }),
+);
 
 // ---- Health check -------------------------------------------------------
 app.get('/api/health', (_req, res) => {
@@ -63,7 +79,15 @@ app.use((err, _req, res, _next) => {
 // ---- Boot ---------------------------------------------------------------
 const PORT = process.env.PORT || 5000;
 
+// Seed demo data when the in-memory MongoDB is used (so login works
+// immediately after a fresh `npm run dev`). Also honours SEED_DEMO=true.
+async function maybeSeed() {
+  const shouldSeed = !process.env.MONGO_URI || process.env.SEED_DEMO === 'true';
+  if (shouldSeed) await seedDemo();
+}
+
 connectDB()
+  .then(maybeSeed)
   .then(() => {
     app.listen(PORT, () => {
       console.log(`StockFlow API listening on http://localhost:${PORT}`);
