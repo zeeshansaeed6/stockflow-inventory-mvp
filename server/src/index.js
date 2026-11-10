@@ -10,6 +10,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const morgan = require('morgan');
 
 const connectDB = require('./config/db');
 
@@ -29,6 +30,10 @@ app.use(
   }),
 );
 app.use(express.json());
+// Compact request log in dev, hidden during automated tests.
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan('dev'));
+}
 
 // ---- Health check -------------------------------------------------------
 app.get('/api/health', (_req, res) => {
