@@ -105,7 +105,8 @@ async function login(req, res, next) {
 async function me(req, res, next) {
   try {
     const user = await User.findById(req.auth.userId).populate('organization');
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    // Token is for a user that no longer exists -> treat as expired.
+    if (!user) return res.status(401).json({ message: 'Session expired' });
 
     return res.json({
       id: user._id,

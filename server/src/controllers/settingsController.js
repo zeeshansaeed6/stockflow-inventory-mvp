@@ -10,7 +10,9 @@ const Organization = require('../models/Organization');
 async function get(req, res, next) {
   try {
     const org = await Organization.findById(req.auth.organizationId);
-    if (!org) return res.status(404).json({ message: 'Organization not found' });
+    // When the referenced org no longer exists the token is stale — ask
+    // the client to log in again instead of leaving them in a broken state.
+    if (!org) return res.status(401).json({ message: 'Session expired' });
     return res.json({
       organizationName: org.name,
       defaultLowStockThreshold: org.defaultLowStockThreshold,
@@ -40,7 +42,7 @@ async function update(req, res, next) {
       new: true,
       runValidators: true,
     });
-    if (!org) return res.status(404).json({ message: 'Organization not found' });
+    if (!org) return res.status(401).json({ message: 'Session expired' });
 
     return res.json({
       organizationName: org.name,
