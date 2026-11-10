@@ -1,100 +1,142 @@
-# StockFlow MVP
+# StockFlow
 
-A minimal multi-tenant SaaS inventory management system built as a 6-hour MVP.
+A multi-tenant SaaS inventory management app. Sign up with an organization, manage products and stock levels, and see low-stock items at a glance. Every organization's data is fully isolated from every other's.
 
-## Tech Stack
-
-- **Backend:** Node.js, Express, MongoDB (Mongoose), JWT auth, bcrypt
-- **Frontend:** React (Vite), React Router, Axios, Tailwind CSS
+Built as a 6-hour MVP, then extended with categories, suppliers, reports and a stock-movement history.
 
 ## Features
 
-- Email/password signup & login (JWT)
-- Per-organization data isolation (multi-tenant)
-- Product CRUD with SKU, quantity, prices, low-stock threshold
-- Dashboard: total products, total units on hand, low-stock items
-- Global default low-stock threshold setting
+**Core (MVP scope)**
 
-## Repo Layout
+- Email/password signup and login (JWT, bcrypt-hashed passwords)
+- Organization created on signup; all data is scoped to it (no cross-tenant access)
+- Product CRUD: name, SKU (unique per organization), description, quantity, cost price, selling price, low-stock threshold
+- Search by name or SKU, with confirm-before-delete
+- Quick stock adjust (+/- N units with a note)
+- Dashboard: total products, total units on hand, and a low-stock table
+- Settings: organization-wide default low-stock threshold (used when a product has none)
+
+**Extras beyond the MVP**
+
+- Categories and suppliers
+- Stock movement history and inventory reports
+- CSV export of products
+- Pagination, sorting and a low-stock-only filter on the product list
+- Dark mode, toast notifications, rate-limited auth endpoints, security headers (helmet)
+
+## Tech Stack
+
+| Layer    | Tools                                                  |
+|----------|--------------------------------------------------------|
+| Backend  | Node.js, Express, MongoDB (Mongoose), express-validator |
+| Auth     | JWT, bcryptjs                                          |
+| Frontend | React 18, Vite, React Router, Axios, Tailwind CSS      |
+
+## Project Layout
 
 ```
-/server   -> Express + MongoDB API
-/client   -> React (Vite) + Tailwind UI
+server/   Express API
+  src/config/       DB connection, demo seed data
+  src/controllers/  request handlers
+  src/middleware/   auth (JWT), ObjectId validation
+  src/models/       Mongoose models
+  src/routes/       route definitions
+client/   React app (Vite + Tailwind)
+  src/pages/        Dashboard, Products, Settings, Reports, ...
 ```
 
-## Prerequisites
+## Getting Started
 
-- Node.js 18+ (works on Windows, macOS, Linux)
-- A running MongoDB instance (local `mongodb://127.0.0.1:27017` or MongoDB Atlas URI)
-
-## Optional: run MongoDB in Docker
-
-If you don't want to install MongoDB on your machine:
+**Prerequisites:** Node.js 18+ (see `.nvmrc`) and a MongoDB instance (local, Docker or Atlas).
 
 ```bash
-docker compose up -d     # starts a mongo:7 container on localhost:27017
-docker compose down      # stops it when done
+# 1. Install root, server and client dependencies
+npm run install:all
+
+# 2. Create your env file
+cp server/.env.example server/.env     # Windows: copy server\.env.example server\.env
+#    then edit server/.env and set JWT_SECRET
+
+# 3. (Optional) start MongoDB in Docker
+docker compose up -d
+
+# 4. Run API + client together
+npm run dev
 ```
 
-Then set `MONGO_URI=mongodb://127.0.0.1:27017/stockflow` in `server/.env`.
+Open **http://localhost:5173**, sign up, and start adding products. The API runs on port 5001; the Vite dev server proxies `/api` to it.
 
-## Quick start (one command)
+### Try it with demo data
 
-```bash
-# At repo root
-npm run install:all   # installs root + server + client deps
-cp server/.env.example server/.env   # Windows: copy server\.env.example server\.env
-# edit server/.env (MONGO_URI, JWT_SECRET)
-npm run dev           # starts API + Vite together
-```
+If `MONGO_URI` is **not** set, the server starts an in-memory MongoDB and seeds demo accounts, so you can log in immediately with no database installed. To seed demo data into a real database, set `SEED_DEMO=true`.
 
-Then open http://localhost:5173.
+| Email                  | Organization        | Password   |
+|------------------------|---------------------|------------|
+| `owner@bluespark.demo` | Blue Spark Electronics | `demo1234` |
+| `owner@rooted.demo`    | Rooted Coffee       | `demo1234` |
 
-## Setup (manual, two terminals)
+Demo accounts are for local use only. Never enable seeding in production.
 
-### 1. Backend
+## Scripts
 
-```bash
-cd server
-cp .env.example .env     # on Windows: copy .env.example .env
-# Edit .env and set MONGO_URI and JWT_SECRET
-npm install
-npm run dev              # starts on http://localhost:5001
-```
+| Command               | What it does                          |
+|-----------------------|---------------------------------------|
+| `npm run dev`         | Run API and client together           |
+| `npm run dev:server`  | API only (nodemon, auto-reload)       |
+| `npm run dev:client`  | Client only (Vite)                    |
+| `npm start`           | API in production mode                |
+| `npm --prefix client run build` | Production build of the client |
 
-### 2. Frontend
+## Environment Variables (`server/.env`)
 
-```bash
-cd client
-npm install
-npm run dev              # starts on http://localhost:5173
-```
+| Key             | Description                                          | Example                                |
+|-----------------|------------------------------------------------------|----------------------------------------|
+| `PORT`          | API port                                             | `5001`                                 |
+| `MONGO_URI`     | MongoDB connection string (omit for in-memory dev DB)| `mongodb://127.0.0.1:27017/stockflow`  |
+| `JWT_SECRET`    | Secret used to sign tokens. **Use a long random value.** | `change-me`                        |
+| `CLIENT_ORIGIN` | Allowed CORS origin                                  | `http://localhost:5173`                |
+| `SEED_DEMO`     | Set `true` to load demo data                         | `true`                                 |
 
-Open http://localhost:5173 in a browser, sign up, and start managing inventory.
+`MONGO_URI` is required when `NODE_ENV=production`. `.env` is git-ignored; never commit secrets.
 
-## Environment Variables (server/.env)
+## API Reference
 
-| Key              | Description                                | Example                              |
-|------------------|--------------------------------------------|--------------------------------------|
-| `PORT`           | API port                                   | `5001`                               |
-| `MONGO_URI`      | MongoDB connection string                  | `mongodb://127.0.0.1:27017/stockflow`|
-| `JWT_SECRET`     | Secret used to sign JWT tokens             | `change-me-in-prod`                  |
-| `CLIENT_ORIGIN`  | Allowed CORS origin (frontend URL)         | `http://localhost:5173`              |
+Base path `/api`. All routes except `health` and `auth/signup|login` need `Authorization: Bearer <token>`. Malformed IDs return `404`; validation errors return `400`; duplicate emails/SKUs return `409`.
 
-## API Overview
+| Method | Route                       | Description                               |
+|--------|-----------------------------|-------------------------------------------|
+| GET    | `/health`                   | Health check                              |
+| POST   | `/auth/signup`              | Create organization + user, returns token |
+| POST   | `/auth/login`               | Log in, returns token                     |
+| GET    | `/auth/me`                  | Current user and organization             |
+| GET    | `/products`                 | List products (`q`, `page`, `pageSize`, `sortBy`, `sortDir`, `lowOnly`, `category`, `supplier`) |
+| POST   | `/products`                 | Create product                            |
+| GET    | `/products/:id`             | Get product                               |
+| PUT    | `/products/:id`             | Update product                            |
+| DELETE | `/products/:id`             | Delete product                            |
+| POST   | `/products/:id/adjust`      | Adjust stock by `{ delta, note }`         |
+| GET    | `/products/export.csv`      | Download products as CSV                  |
+| GET    | `/dashboard`                | Totals and low-stock items                |
+| GET    | `/settings`                 | Get organization settings                 |
+| PUT    | `/settings`                 | Update settings                           |
+| GET/POST | `/categories`             | List / create categories                  |
+| PUT/DELETE | `/categories/:id`       | Update / delete a category                |
+| GET/POST | `/suppliers`              | List / create suppliers                   |
+| PUT/DELETE | `/suppliers/:id`        | Update / delete a supplier                |
+| GET    | `/reports/inventory`        | Inventory report                          |
+| GET    | `/reports/movements`        | Stock movement history                    |
 
-| Method | Route                     | Description             |
-|--------|---------------------------|-------------------------|
-| POST   | `/api/auth/signup`        | Create user + org       |
-| POST   | `/api/auth/login`         | Login, returns JWT      |
-| GET    | `/api/auth/me`            | Current user info       |
-| GET    | `/api/products`           | List org products       |
-| POST   | `/api/products`           | Create product          |
-| GET    | `/api/products/:id`       | Get product             |
-| PUT    | `/api/products/:id`       | Update product          |
-| DELETE | `/api/products/:id`       | Delete product          |
-| GET    | `/api/dashboard`          | Dashboard summary       |
-| GET    | `/api/settings`           | Get org settings        |
-| PUT    | `/api/settings`           | Update settings         |
+### How low stock works
 
-All product/dashboard/settings routes require `Authorization: Bearer <token>`.
+A product is low stock when `quantityOnHand <= lowStockThreshold`. If the product has no threshold of its own, the organization's default (Settings, initially `5`) is used.
+
+## Known Limitations
+
+- One user per organization; no roles or invites
+- No password reset (reset manually in the database)
+- Products are hard-deleted
+- No automated test suite yet
+
+## License
+
+See [LICENSE](LICENSE).
