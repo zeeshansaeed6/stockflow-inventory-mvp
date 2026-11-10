@@ -50,6 +50,16 @@ export default function Products() {
     }
   }
 
+  // Quick inline +/- adjustment. Keeps the list in sync without a full reload.
+  async function handleAdjust(id, delta) {
+    try {
+      const { data } = await api.post(`/products/${id}/adjust`, { delta });
+      setProducts((prev) => prev.map((p) => (p.id === id ? data : p)));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Adjust failed');
+    }
+  }
+
   function isLow(p) {
     const t =
       p.lowStockThreshold === null || p.lowStockThreshold === undefined
@@ -119,7 +129,27 @@ export default function Products() {
                   </td>
                   <td className="px-5 py-3 text-slate-600">{p.sku}</td>
                   <td className="px-5 py-3 text-right text-slate-900">
-                    {p.quantityOnHand}
+                    <div className="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleAdjust(p.id, -1)}
+                        className="w-7 h-7 rounded border border-slate-300 text-slate-600 hover:bg-slate-100"
+                        title="Decrease by 1"
+                      >
+                        −
+                      </button>
+                      <span className="w-10 text-center font-medium">
+                        {p.quantityOnHand}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjust(p.id, 1)}
+                        className="w-7 h-7 rounded border border-slate-300 text-slate-600 hover:bg-slate-100"
+                        title="Increase by 1"
+                      >
+                        +
+                      </button>
+                    </div>
                   </td>
                   <td className="px-5 py-3">
                     {isLow(p) ? (
