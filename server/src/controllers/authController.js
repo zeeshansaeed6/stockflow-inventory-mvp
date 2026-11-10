@@ -9,10 +9,13 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const Organization = require('../models/Organization');
 
-// Build a JWT for a given user.
+// Build a JWT for a given user. Handles both raw ObjectId and populated doc.
 function signToken(user) {
+  const orgId = user.organization?._id
+    ? user.organization._id.toString()
+    : user.organization.toString();
   return jwt.sign(
-    { sub: user._id.toString(), org: user.organization.toString() },
+    { sub: user._id.toString(), org: orgId },
     process.env.JWT_SECRET,
     { expiresIn: '7d' },
   );
