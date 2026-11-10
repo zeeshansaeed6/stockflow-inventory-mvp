@@ -108,7 +108,7 @@ export default function Products() {
             .
           </div>
         ) : (
-          <table className="min-w-full text-sm">
+          <div className="overflow-x-auto"><table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-slate-600 uppercase text-xs">
               <tr>
                 <th className="text-left px-5 py-3">Name</th>
@@ -176,9 +176,15 @@ export default function Products() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
+
+      {!loading && filtered.length > 0 && (
+        <div className="text-xs text-slate-500">
+          Showing {filtered.length} of {products.length} products
+        </div>
+      )}
     </div>
   );
 }
