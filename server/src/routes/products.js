@@ -8,7 +8,10 @@ const { body } = require('express-validator');
 const { authRequired } = require('../middleware/auth');
 const ctrl = require('../controllers/productController');
 
+const validateId = require('../middleware/validateId');
+
 const router = express.Router();
+router.param('id', validateId);
 
 // Shared validation for create/update bodies.
 const productValidators = [
