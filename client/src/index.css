@@ -129,7 +129,7 @@ html.dark {
     @apply text-slate-500 dark:text-slate-400;
   }
   .chip {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset;
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
   }
 
   /* Tables use hairline row dividers and a shaded header bar. */
@@ -161,10 +161,19 @@ html.dark {
     @apply border-t border-slate-200 dark:border-slate-800;
   }
 
-  /* Chip colour variants — ring + text match so they read as "outlined". */
-  .chip-brand   { @apply ring-brand-200 text-brand-700 bg-brand-50 dark:ring-brand-500/30 dark:bg-brand-500/10 dark:text-brand-200; }
-  .chip-success { @apply ring-emerald-200 text-emerald-700 bg-emerald-50 dark:ring-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200; }
-  .chip-warn    { @apply ring-amber-200 text-amber-700 bg-amber-50 dark:ring-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200; }
-  .chip-danger  { @apply ring-red-200 text-red-700 bg-red-50 dark:ring-red-500/30 dark:bg-red-500/10 dark:text-red-200; }
-  .chip-neutral { @apply ring-slate-200 text-slate-700 bg-slate-50 dark:ring-slate-700 dark:bg-slate-800 dark:text-slate-200; }
 }
+
+/* Chip colour variants — plain CSS so they don't depend on Tailwind
+   resolving custom ring-* classes via @apply. Each variant draws a 1px
+   inset ring via box-shadow, with light/dark pairs. */
+.chip-brand   { color: #1d4ed8; background: #eff6ff; box-shadow: inset 0 0 0 1px #bfdbfe; }
+.chip-success { color: #047857; background: #ecfdf5; box-shadow: inset 0 0 0 1px #a7f3d0; }
+.chip-warn    { color: #b45309; background: #fffbeb; box-shadow: inset 0 0 0 1px #fde68a; }
+.chip-danger  { color: #b91c1c; background: #fef2f2; box-shadow: inset 0 0 0 1px #fecaca; }
+.chip-neutral { color: #334155; background: #f8fafc; box-shadow: inset 0 0 0 1px #e2e8f0; }
+
+html.dark .chip-brand   { color: #bfdbfe; background: rgba(59,130,246,0.12); box-shadow: inset 0 0 0 1px rgba(59,130,246,0.35); }
+html.dark .chip-success { color: #a7f3d0; background: rgba(16,185,129,0.12); box-shadow: inset 0 0 0 1px rgba(16,185,129,0.35); }
+html.dark .chip-warn    { color: #fde68a; background: rgba(245,158,11,0.12); box-shadow: inset 0 0 0 1px rgba(245,158,11,0.35); }
+html.dark .chip-danger  { color: #fecaca; background: rgba(239,68,68,0.12); box-shadow: inset 0 0 0 1px rgba(239,68,68,0.35); }
+html.dark .chip-neutral { color: #e2e8f0; background: rgba(30,41,59,0.6); box-shadow: inset 0 0 0 1px rgba(71,85,105,0.6); }
