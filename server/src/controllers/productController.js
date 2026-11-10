@@ -6,6 +6,25 @@ const { validationResult } = require('express-validator');
 const Product = require('../models/Product');
 const StockMovement = require('../models/StockMovement');
 
+const Category = require('../models/Category');
+const Supplier = require('../models/Supplier');
+
+function isObjectId(v) {
+  return typeof v === 'string' && /^[0-9a-f]{24}$/i.test(v);
+}
+
+// category/supplier must be valid ids that belong to the caller's organization
+// (otherwise one tenant could attach, and read back, another tenant's records).
+async function validateRefs(orgId, body) {
+  for (const [key, Model] of [['category', Category], ['supplier', Supplier]]) {
+    const v = body[key];
+    if (v === undefined || v === null || v === '') continue;
+    if (!isObjectId(v)) return `${key} is invalid`;
+    if (!(await Model.exists({ _id: v, organization: orgId }))) return `${key} not found`;
+  }
+  return null;
+}
+
 // Helper: record a stock movement if the quantity actually changed.
 async function logMovement({ orgId, userId, product, delta, reason, note = '' }) {
   if (delta === 0) return;
@@ -52,7 +71,7 @@ function toDTO(p) {
 // for existing clients that don't send pagination params.
 async function list(req, res, next) {
   try {
-    const { q } = req.query;
+    const q = typeof req.query.q === 'string' ? req.query.q : '';
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(200, Math.max(1, parseInt(req.query.pageSize, 10) || 50));
 
@@ -90,8 +109,12 @@ async function list(req, res, next) {
     const sortDir = req.query.sortDir === 'asc' ? 1 : -1;
 
     // Optional category/supplier filters.
-    if (req.query.category) filter.category = req.query.category;
-    if (req.query.supplier) filter.supplier = req.query.supplier;
+    for (const key of ['category', 'supplier']) {
+      const v = req.query[key];
+      if (v === undefined || v === '') continue;
+      if (!isObjectId(v)) return res.status(400).json({ message: `${key} is invalid` });
+      filter[key] = v;
+    }
 
     const [total, products] = await Promise.all([
       Product.countDocuments(filter),
@@ -144,6 +167,9 @@ async function create(req, res, next) {
       return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
     }
 
+    const refError = await validateRefs(req.auth.organizationId, req.body);
+    if (refError) return res.status(400).json({ message: refError });
+
     const payload = {
       ...req.body,
       // Empty-string refs come from unselected dropdowns; store null.
@@ -181,6 +207,9 @@ async function update(req, res, next) {
     if (!errors.isEmpty()) {
       return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
     }
+
+    const refError = await validateRefs(req.auth.organizationId, req.body);
+    if (refError) return res.status(400).json({ message: refError });
 
     const updatable = [
       'name',
@@ -257,35 +286,51 @@ async function remove(req, res, next) {
 }
 
 // POST /api/products/:id/adjust
-// Body: { delta: number, note?: string }
-// Adjusts quantityOnHand by the signed delta, clamped at 0.
+// Body: { delta: integer, note?: string }
+// Adjusts quantityOnHand by the signed delta, clamped at 0. The update is a
+// single atomic operation so concurrent adjustments never overwrite each other.
 async function adjust(req, res, next) {
   try {
-    const delta = Number(req.body.delta);
-    if (!Number.isFinite(delta) || delta === 0) {
-      return res.status(400).json({ message: 'delta must be a non-zero number' });
+    const delta = req.body.delta;
+    if (typeof delta !== 'number' || !Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 1e9) {
+      return res.status(400).json({ message: 'delta must be a non-zero whole number' });
     }
 
-    const product = await Product.findOne({
-      _id: req.params.id,
-      organization: req.auth.organizationId,
-    });
-    if (!product) return res.status(404).json({ message: 'Product not found' });
+    const note = typeof req.body.note === 'string' ? req.body.note.slice(0, 500) : '';
+    const mongoose = require('mongoose');
 
-    const prev = product.quantityOnHand || 0;
+    // Returns the document as it was BEFORE the change; the new value is derived
+    // with the same formula the database applied, on the same atomic snapshot.
+    const before = await Product.findOneAndUpdate(
+      { _id: req.params.id, organization: req.auth.organizationId },
+      [
+        {
+          $set: {
+            quantityOnHand: { $max: [0, { $add: [{ $ifNull: ['$quantityOnHand', 0] }, delta] }] },
+            lastUpdatedBy: new mongoose.Types.ObjectId(req.auth.userId),
+            updatedAt: '$$NOW',
+          },
+        },
+      ],
+      { new: false },
+    );
+    if (!before) return res.status(404).json({ message: 'Product not found' });
+
+    const prev = before.quantityOnHand || 0;
     const nextQty = Math.max(0, prev + delta);
     const appliedDelta = nextQty - prev;
-    product.quantityOnHand = nextQty;
-    product.lastUpdatedBy = req.auth.userId;
-    await product.save();
+
+    const product = await Product.findById(before._id)
+      .populate('category', 'name color')
+      .populate('supplier', 'name');
 
     await logMovement({
       orgId: req.auth.organizationId,
       userId: req.auth.userId,
-      product,
+      product: { _id: before._id, quantityOnHand: nextQty },
       delta: appliedDelta,
       reason: 'adjust',
-      note: req.body.note || '',
+      note,
     });
 
     return res.json(toDTO(product));
@@ -297,7 +342,9 @@ async function adjust(req, res, next) {
 // Escape a cell so commas, quotes and newlines survive the CSV round-trip.
 function csvCell(v) {
   if (v === null || v === undefined) return '';
-  const s = String(v);
+  let s = String(v);
+  // Neutralise spreadsheet formula injection (text starting with = + - @ tab CR).
+  if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
