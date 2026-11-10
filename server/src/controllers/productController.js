@@ -4,9 +4,32 @@
 
 const { validationResult } = require('express-validator');
 const Product = require('../models/Product');
+const StockMovement = require('../models/StockMovement');
+
+// Helper: record a stock movement if the quantity actually changed.
+async function logMovement({ orgId, userId, product, delta, reason, note = '' }) {
+  if (delta === 0) return;
+  await StockMovement.create({
+    organization: orgId,
+    user: userId,
+    product: product._id,
+    delta,
+    resultingQty: product.quantityOnHand,
+    reason,
+    note,
+  });
+}
 
 // Shape product for API responses.
 function toDTO(p) {
+  // Mongoose docs populate() yields nested docs; normalise to flat refs.
+  const cat = p.category && p.category.name
+    ? { id: p.category._id, name: p.category.name, color: p.category.color }
+    : p.category || null;
+  const sup = p.supplier && p.supplier.name
+    ? { id: p.supplier._id, name: p.supplier.name }
+    : p.supplier || null;
+
   return {
     id: p._id,
     name: p.name,
@@ -16,6 +39,8 @@ function toDTO(p) {
     costPrice: p.costPrice,
     sellingPrice: p.sellingPrice,
     lowStockThreshold: p.lowStockThreshold,
+    category: cat,
+    supplier: sup,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   };
@@ -63,9 +88,15 @@ async function list(req, res, next) {
     const sortBy = sortFields[req.query.sortBy] || 'createdAt';
     const sortDir = req.query.sortDir === 'asc' ? 1 : -1;
 
+    // Optional category/supplier filters.
+    if (req.query.category) filter.category = req.query.category;
+    if (req.query.supplier) filter.supplier = req.query.supplier;
+
     const [total, products] = await Promise.all([
       Product.countDocuments(filter),
       Product.find(filter)
+        .populate('category', 'name color')
+        .populate('supplier', 'name')
         .sort({ [sortBy]: sortDir })
         .skip((page - 1) * pageSize)
         .limit(pageSize),
@@ -94,7 +125,9 @@ async function getOne(req, res, next) {
     const product = await Product.findOne({
       _id: req.params.id,
       organization: req.auth.organizationId,
-    });
+    })
+      .populate('category', 'name color')
+      .populate('supplier', 'name');
     if (!product) return res.status(404).json({ message: 'Product not found' });
     return res.json(toDTO(product));
   } catch (err) {
@@ -112,11 +145,24 @@ async function create(req, res, next) {
 
     const payload = {
       ...req.body,
+      // Empty-string refs come from unselected dropdowns; store null.
+      category: req.body.category || null,
+      supplier: req.body.supplier || null,
       organization: req.auth.organizationId,
       lastUpdatedBy: req.auth.userId,
     };
 
     const product = await Product.create(payload);
+    if (product.quantityOnHand > 0) {
+      await logMovement({
+        orgId: req.auth.organizationId,
+        userId: req.auth.userId,
+        product,
+        delta: product.quantityOnHand,
+        reason: 'create',
+        note: 'Initial stock',
+      });
+    }
     return res.status(201).json(toDTO(product));
   } catch (err) {
     // Duplicate SKU within same org.
@@ -143,18 +189,46 @@ async function update(req, res, next) {
       'costPrice',
       'sellingPrice',
       'lowStockThreshold',
+      'category',
+      'supplier',
     ];
     const patch = { lastUpdatedBy: req.auth.userId };
     for (const key of updatable) {
-      if (req.body[key] !== undefined) patch[key] = req.body[key];
+      if (req.body[key] !== undefined) {
+        // Normalise empty refs to null.
+        if ((key === 'category' || key === 'supplier') && !req.body[key]) {
+          patch[key] = null;
+        } else {
+          patch[key] = req.body[key];
+        }
+      }
     }
+
+    // Pre-fetch so we can compute the qty delta for the audit log.
+    const before = await Product.findOne({
+      _id: req.params.id,
+      organization: req.auth.organizationId,
+    });
+    if (!before) return res.status(404).json({ message: 'Product not found' });
 
     const product = await Product.findOneAndUpdate(
       { _id: req.params.id, organization: req.auth.organizationId },
       patch,
       { new: true, runValidators: true },
-    );
-    if (!product) return res.status(404).json({ message: 'Product not found' });
+    )
+      .populate('category', 'name color')
+      .populate('supplier', 'name');
+
+    if (patch.quantityOnHand !== undefined && patch.quantityOnHand !== before.quantityOnHand) {
+      await logMovement({
+        orgId: req.auth.organizationId,
+        userId: req.auth.userId,
+        product,
+        delta: patch.quantityOnHand - before.quantityOnHand,
+        reason: 'edit',
+        note: 'Edited via product form',
+      });
+    }
     return res.json(toDTO(product));
   } catch (err) {
     if (err && err.code === 11000) {
@@ -196,10 +270,21 @@ async function adjust(req, res, next) {
     });
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    const next = Math.max(0, (product.quantityOnHand || 0) + delta);
-    product.quantityOnHand = next;
+    const prev = product.quantityOnHand || 0;
+    const nextQty = Math.max(0, prev + delta);
+    const appliedDelta = nextQty - prev;
+    product.quantityOnHand = nextQty;
     product.lastUpdatedBy = req.auth.userId;
     await product.save();
+
+    await logMovement({
+      orgId: req.auth.organizationId,
+      userId: req.auth.userId,
+      product,
+      delta: appliedDelta,
+      reason: 'adjust',
+      note: req.body.note || '',
+    });
 
     return res.json(toDTO(product));
   } catch (err) {

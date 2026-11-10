@@ -22,6 +22,9 @@ const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const dashboardRoutes = require('./routes/dashboard');
 const settingsRoutes = require('./routes/settings');
+const categoryRoutes = require('./routes/categories');
+const supplierRoutes = require('./routes/suppliers');
+const reportRoutes = require('./routes/reports');
 
 const app = express();
 
@@ -61,6 +64,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/reports', reportRoutes);
 
 // ---- 404 for unknown API routes ----------------------------------------
 app.use('/api', (_req, res) => {

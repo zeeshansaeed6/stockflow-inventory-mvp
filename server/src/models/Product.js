@@ -21,6 +21,18 @@ const productSchema = new mongoose.Schema(
     sellingPrice: { type: Number, default: null, min: 0 },
     // If null, fall back to organization.defaultLowStockThreshold.
     lowStockThreshold: { type: Number, default: null, min: 0 },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      default: null,
+      index: true,
+    },
+    supplier: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Supplier',
+      default: null,
+      index: true,
+    },
     lastUpdatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
