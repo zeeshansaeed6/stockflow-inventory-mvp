@@ -41,6 +41,11 @@ app.use('/api/products', productRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/settings', settingsRoutes);
 
+// ---- 404 for unknown API routes ----------------------------------------
+app.use('/api', (_req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
 // ---- Centralised error handler -----------------------------------------
 app.use((err, _req, res, _next) => {
   console.error('[API error]', err);

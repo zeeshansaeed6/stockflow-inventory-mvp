@@ -18,4 +18,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// If the server rejects our token, drop it and bounce to /login.
+// Keeps the UI from getting stuck in a "silently signed out" state.
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('stockflow_token');
+      localStorage.removeItem('stockflow_user');
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(err);
+  },
+);
+
 export default api;
