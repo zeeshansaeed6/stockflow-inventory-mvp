@@ -25,10 +25,25 @@ export default function Dashboard() {
   }, []);
 
   if (error) {
-    return <div className="text-red-600">{error}</div>;
+    return (
+      <div className="rounded-md bg-red-50 border border-red-200 text-red-700 text-sm p-3">
+        {error}
+      </div>
+    );
   }
   if (!data) {
-    return <div className="text-slate-500">Loading…</div>;
+    // Simple shimmering skeleton — matches final layout to avoid jumpy UI.
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-7 w-48 bg-slate-200 rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="card p-5 h-24" />
+          ))}
+        </div>
+        <div className="card h-40" />
+      </div>
+    );
   }
 
   return (
