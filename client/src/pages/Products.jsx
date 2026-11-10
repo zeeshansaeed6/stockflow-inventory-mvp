@@ -6,6 +6,9 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [defaultThreshold, setDefaultThreshold] = useState(5);
   const [query, setQuery] = useState('');
+  // sortBy: 'name' | 'sku' | 'qty' | 'updated'
+  const [sortBy, setSortBy] = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -31,14 +34,42 @@ export default function Products() {
     load();
   }, []);
 
-  // Client-side search over name/SKU (nice for small catalogs).
+  // Client-side search over name/SKU (nice for small catalogs), then sort.
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
-    );
-  }, [query, products]);
+    let list = !q
+      ? [...products]
+      : products.filter(
+          (p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
+        );
+
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const cmp = {
+      name: (a, b) => a.name.localeCompare(b.name),
+      sku: (a, b) => a.sku.localeCompare(b.sku),
+      qty: (a, b) => a.quantityOnHand - b.quantityOnHand,
+      updated: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
+    }[sortBy];
+
+    list.sort((a, b) => cmp(a, b) * dir);
+    return list;
+  }, [query, products, sortBy, sortDir]);
+
+  // Toggle sort direction when the same column is clicked again.
+  function toggleSort(col) {
+    if (sortBy === col) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(col);
+      setSortDir('asc');
+    }
+  }
+
+  // Tiny caret indicator used in sortable column headers.
+  function SortCaret({ col }) {
+    if (sortBy !== col) return <span className="text-slate-300 ml-1">↕</span>;
+    return <span className="text-slate-500 ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>;
+  }
 
   async function handleDelete(id) {
     if (!confirm('Delete this product? This cannot be undone.')) return;
@@ -134,9 +165,24 @@ export default function Products() {
           <div className="overflow-x-auto"><table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-slate-600 uppercase text-xs">
               <tr>
-                <th className="text-left px-5 py-3">Name</th>
-                <th className="text-left px-5 py-3">SKU</th>
-                <th className="text-right px-5 py-3">Qty</th>
+                <th
+                  className="text-left px-5 py-3 cursor-pointer select-none hover:text-slate-900"
+                  onClick={() => toggleSort('name')}
+                >
+                  Name<SortCaret col="name" />
+                </th>
+                <th
+                  className="text-left px-5 py-3 cursor-pointer select-none hover:text-slate-900"
+                  onClick={() => toggleSort('sku')}
+                >
+                  SKU<SortCaret col="sku" />
+                </th>
+                <th
+                  className="text-right px-5 py-3 cursor-pointer select-none hover:text-slate-900"
+                  onClick={() => toggleSort('qty')}
+                >
+                  Qty<SortCaret col="qty" />
+                </th>
                 <th className="text-left px-5 py-3">Status</th>
                 <th className="text-right px-5 py-3">Price</th>
                 <th className="text-right px-5 py-3">Actions</th>
