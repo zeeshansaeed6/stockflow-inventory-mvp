@@ -4,6 +4,13 @@ A multi-tenant SaaS inventory management app. Sign up with an organization, mana
 
 Built as a 6-hour MVP, then extended with categories, suppliers, reports and a stock-movement history.
 
+## Live Demo
+
+- **App:** https://stockflow-inventory.pages.dev
+- **API health:** https://stockflow-api-mt38.onrender.com/api/health
+
+The API runs on Render's free tier and sleeps when idle, so the first request after a pause can take about 30 seconds. Sign up with any email to try it.
+
 ## Features
 
 **Core (MVP scope)**
