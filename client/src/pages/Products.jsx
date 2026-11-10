@@ -9,26 +9,32 @@ export default function Products() {
   // sortBy: 'name' | 'sku' | 'qty' | 'updated'
   const [sortBy, setSortBy] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Keep the latest request's id so stale responses don't overwrite newer ones.
   const reqIdRef = useRef(0);
 
-  async function load(searchTerm) {
+  async function load(searchTerm, p) {
     const myId = ++reqIdRef.current;
     setLoading(true);
     try {
-      // Pull the default threshold once; search updates only hit /products.
-      const productsReq = api.get('/products', {
-        params: searchTerm ? { q: searchTerm } : {},
-      });
-      const [{ data: items }, settingsRes] = await Promise.all([
+      const params = { page: p, pageSize };
+      if (searchTerm) params.q = searchTerm;
+
+      const productsReq = api.get('/products', { params });
+      const [{ data }, settingsRes] = await Promise.all([
         productsReq,
-        defaultThreshold === 5 && !searchTerm ? api.get('/settings') : Promise.resolve(null),
+        defaultThreshold === 5 && !searchTerm
+          ? api.get('/settings')
+          : Promise.resolve(null),
       ]);
-      if (myId !== reqIdRef.current) return; // a newer request has superseded us
-      setProducts(items);
+      if (myId !== reqIdRef.current) return;
+      setProducts(data.items || []);
+      setTotal(data.total || 0);
       if (settingsRes) setDefaultThreshold(settingsRes.data.defaultLowStockThreshold);
     } catch (err) {
       if (myId !== reqIdRef.current) return;
@@ -38,12 +44,19 @@ export default function Products() {
     }
   }
 
-  // Debounce query changes so we don't fire a request on every keystroke.
+  // Reset to page 1 whenever search changes so the result stays meaningful.
   useEffect(() => {
-    const t = setTimeout(() => load(query.trim()), 250);
+    setPage(1);
+  }, [query]);
+
+  // Debounce + refetch on query or page changes.
+  useEffect(() => {
+    const t = setTimeout(() => load(query.trim(), page), 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, page]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   // Search runs on the server; we only sort the current page locally.
   const filtered = useMemo(() => {
@@ -251,9 +264,29 @@ export default function Products() {
         )}
       </div>
 
-      {!loading && filtered.length > 0 && (
-        <div className="text-xs text-slate-500">
-          Showing {filtered.length} of {products.length} products
+      {!loading && total > 0 && (
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <div>
+            Page {page} of {totalPages} · {total} total
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="btn-secondary px-3 py-1 text-xs"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              ← Prev
+            </button>
+            <button
+              type="button"
+              className="btn-secondary px-3 py-1 text-xs"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next →
+            </button>
+          </div>
         </div>
       )}
     </div>
