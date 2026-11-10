@@ -59,7 +59,7 @@ cd server
 cp .env.example .env     # on Windows: copy .env.example .env
 # Edit .env and set MONGO_URI and JWT_SECRET
 npm install
-npm run dev              # starts on http://localhost:5000
+npm run dev              # starts on http://localhost:5001
 ```
 
 ### 2. Frontend
@@ -76,7 +76,7 @@ Open http://localhost:5173 in a browser, sign up, and start managing inventory.
 
 | Key              | Description                                | Example                              |
 |------------------|--------------------------------------------|--------------------------------------|
-| `PORT`           | API port                                   | `5000`                               |
+| `PORT`           | API port                                   | `5001`                               |
 | `MONGO_URI`      | MongoDB connection string                  | `mongodb://127.0.0.1:27017/stockflow`|
 | `JWT_SECRET`     | Secret used to sign JWT tokens             | `change-me-in-prod`                  |
 | `CLIENT_ORIGIN`  | Allowed CORS origin (frontend URL)         | `http://localhost:5173`              |
