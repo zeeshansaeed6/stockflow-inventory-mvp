@@ -77,6 +77,20 @@ If `MONGO_URI` is **not** set, the server starts an in-memory MongoDB and seeds 
 
 Demo accounts are for local use only. Never enable seeding in production.
 
+## Deployment
+
+| Part     | Host                  | Notes |
+|----------|-----------------------|-------|
+| Database | MongoDB Atlas (free)  | Copy the connection string into `MONGO_URI` |
+| API      | Render (free)         | Uses [render.yaml](render.yaml); root dir `server` |
+| Client   | Cloudflare Pages      | Root `client`, build `npm run build`, output `dist` |
+
+1. **Atlas:** create a free cluster and a database user, and allow network access from anywhere (`0.0.0.0/0`).
+2. **Render:** New > Blueprint > select this repo. Set `MONGO_URI` (Atlas string) and `CLIENT_ORIGIN` (your Pages URL, no trailing slash). `JWT_SECRET` is generated for you.
+3. **Cloudflare Pages:** connect the repo, root directory `client`, build command `npm run build`, output directory `dist`, and the environment variable `VITE_API_URL` set to your Render URL (e.g. `https://stockflow-api.onrender.com`).
+
+`client/public/_redirects` makes page refreshes work on client-side routes. The free Render tier sleeps when idle, so the first request after a pause can take about 30 seconds.
+
 ## Scripts
 
 | Command               | What it does                          |

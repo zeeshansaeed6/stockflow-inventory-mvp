@@ -1,0 +1,20 @@
+# Render Blueprint: deploys the Express API.
+# MONGO_URI and CLIENT_ORIGIN are set in the Render dashboard (sync: false).
+services:
+  - type: web
+    name: stockflow-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false

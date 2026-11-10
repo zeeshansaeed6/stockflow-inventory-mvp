@@ -28,6 +28,10 @@ const reportRoutes = require('./routes/reports');
 
 const app = express();
 
+// Behind a proxy/load balancer (Render, etc.): trust X-Forwarded-* so
+// rate limiting sees real client IPs.
+app.set('trust proxy', 1);
+
 // ---- Middleware ---------------------------------------------------------
 app.use(helmet());
 app.use(
