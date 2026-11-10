@@ -27,7 +27,19 @@ A minimal multi-tenant SaaS inventory management system built as a 6-hour MVP.
 - Node.js 18+ (works on Windows, macOS, Linux)
 - A running MongoDB instance (local `mongodb://127.0.0.1:27017` or MongoDB Atlas URI)
 
-## Setup
+## Quick start (one command)
+
+```bash
+# At repo root
+npm run install:all   # installs root + server + client deps
+cp server/.env.example server/.env   # Windows: copy server\.env.example server\.env
+# edit server/.env (MONGO_URI, JWT_SECRET)
+npm run dev           # starts API + Vite together
+```
+
+Then open http://localhost:5173.
+
+## Setup (manual, two terminals)
 
 ### 1. Backend
 
