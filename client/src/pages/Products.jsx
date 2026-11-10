@@ -12,6 +12,7 @@ export default function Products() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [total, setTotal] = useState(0);
+  const [lowOnly, setLowOnly] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -24,6 +25,7 @@ export default function Products() {
     try {
       const params = { page: p, pageSize };
       if (searchTerm) params.q = searchTerm;
+      if (lowOnly) params.lowOnly = 'true';
 
       const productsReq = api.get('/products', { params });
       const [{ data }, settingsRes] = await Promise.all([
@@ -44,17 +46,17 @@ export default function Products() {
     }
   }
 
-  // Reset to page 1 whenever search changes so the result stays meaningful.
+  // Reset to page 1 whenever filters change so the result stays meaningful.
   useEffect(() => {
     setPage(1);
-  }, [query]);
+  }, [query, lowOnly]);
 
-  // Debounce + refetch on query or page changes.
+  // Debounce + refetch on query/filter/page changes.
   useEffect(() => {
     const t = setTimeout(() => load(query.trim(), page), 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, page]);
+  }, [query, page, lowOnly]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -149,7 +151,7 @@ export default function Products() {
         </div>
       </div>
 
-      <div className="card p-4">
+      <div className="card p-4 flex flex-wrap items-center gap-4">
         <input
           className="input max-w-sm"
           type="text"
@@ -157,6 +159,15 @@ export default function Products() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <label className="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            checked={lowOnly}
+            onChange={(e) => setLowOnly(e.target.checked)}
+          />
+          Low stock only
+        </label>
       </div>
 
       {error && (

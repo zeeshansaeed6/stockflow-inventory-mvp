@@ -37,6 +37,21 @@ async function list(req, res, next) {
       filter.$or = [{ name: regex }, { sku: regex }];
     }
 
+    // Low-stock filter: a product is low if its own threshold (or the
+    // organization default when null) is >= its current qty.
+    if (req.query.lowOnly === 'true') {
+      const Organization = require('../models/Organization');
+      const org = await Organization.findById(req.auth.organizationId);
+      const defaultT = org ? org.defaultLowStockThreshold : 5;
+      // $expr lets us compare fields within a document.
+      filter.$expr = {
+        $lte: [
+          '$quantityOnHand',
+          { $ifNull: ['$lowStockThreshold', defaultT] },
+        ],
+      };
+    }
+
     const [total, products] = await Promise.all([
       Product.countDocuments(filter),
       Product.find(filter)
