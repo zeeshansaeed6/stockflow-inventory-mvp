@@ -8,7 +8,7 @@
   <style>
     :root{ --ok:#059669; --bad:#dc2626; --accent:#2563eb; }
     html{scroll-behavior:smooth}
-    .q-card{transition:box-shadow .2s, border-color .2s}
+    .q-card{transition:box-shadow .2s, border-color .2s, background .2s}
     .q-card.correct{border-color:var(--ok); background:#ecfdf5}
     .q-card.wrong  {border-color:var(--bad); background:#fef2f2}
     .q-card .answer{display:none}
@@ -20,6 +20,44 @@
     details > summary{list-style:none;cursor:pointer}
     details > summary::-webkit-details-marker{display:none}
     .back-to-top{position:fixed;bottom:1rem;right:1rem;background:#2563eb;color:#fff;border-radius:999px;padding:.5rem .9rem;font-weight:600;box-shadow:0 10px 25px -10px rgba(37,99,235,.6)}
+
+    /* ------------ Section accordion ------------ */
+    .accordion{border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04);overflow:hidden}
+    .accordion-head{display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;cursor:pointer;background:linear-gradient(90deg,#f8fafc,#ffffff);border-bottom:1px solid transparent;transition:border-color .2s,background .2s}
+    .accordion.open .accordion-head{border-bottom-color:#e2e8f0}
+    .accordion-head:hover{background:linear-gradient(90deg,#f1f5f9,#ffffff)}
+    .accordion-title{font-weight:700;color:#0f172a;flex:1}
+    .accordion-chev{transition:transform .25s ease}
+    .accordion.open .accordion-chev{transform:rotate(90deg)}
+    .accordion-body{max-height:0;overflow:hidden;transition:max-height .35s ease; padding:0 1.25rem}
+    .accordion.open .accordion-body{max-height:300000px;padding:1rem 1.25rem}
+    .accordion-sub{font-size:.75rem;color:#64748b;background:#eef2f7;border-radius:999px;padding:.1rem .55rem}
+
+    /* ------------ Confetti burst ------------ */
+    .confetti-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:60}
+    .confetti-piece{position:absolute;width:10px;height:14px;border-radius:2px;top:-20px;will-change:transform,opacity;animation:confetti-fall 1200ms cubic-bezier(.22,.9,.3,1) forwards}
+    @keyframes confetti-fall{
+      0%{transform:translate3d(0,-20vh,0) rotate(0deg);opacity:0}
+      10%{opacity:1}
+      100%{transform:translate3d(var(--dx,0),110vh,0) rotate(var(--r,540deg));opacity:1}
+    }
+    .congrats-toast{position:fixed;left:50%;top:14%;transform:translateX(-50%) scale(.85);background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;padding:1rem 1.5rem;border-radius:14px;font-weight:700;font-size:1.1rem;box-shadow:0 20px 50px -10px rgba(16,185,129,.45);z-index:70;opacity:0;animation:congrats-pop 1800ms ease-out forwards}
+    @keyframes congrats-pop{
+      0%{opacity:0;transform:translateX(-50%) scale(.7)}
+      18%{opacity:1;transform:translateX(-50%) scale(1.08)}
+      30%{transform:translateX(-50%) scale(1)}
+      85%{opacity:1}
+      100%{opacity:0;transform:translateX(-50%) scale(.95)}
+    }
+    .learning-toast{position:fixed;left:50%;top:14%;transform:translateX(-50%) scale(.95);background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;padding:.9rem 1.3rem;border-radius:12px;font-weight:600;font-size:1rem;box-shadow:0 18px 45px -10px rgba(249,115,22,.45);z-index:70;opacity:0;animation:congrats-pop 1800ms ease-out forwards}
+
+    /* Tiny sparkles that float up around correct cards */
+    .spark{position:absolute;pointer-events:none;color:#f59e0b;font-size:1.1rem;animation:spark-float 900ms ease-out forwards}
+    @keyframes spark-float{
+      0%{opacity:0;transform:translateY(0) scale(.6) rotate(0deg)}
+      20%{opacity:1}
+      100%{opacity:0;transform:translateY(-50px) scale(1.15) rotate(180deg)}
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -31,6 +69,7 @@
     <nav class="hidden md:flex gap-4 text-sm text-slate-600">
       <a href="#oneliners" class="hover:text-blue-600">One-liners</a>
       <a href="#app" class="hover:text-blue-600">App Q&amp;A</a>
+      <a href="#hr" class="hover:text-blue-600">HR</a>
       <a href="#mcqs" class="hover:text-blue-600">MCQs</a>
       <a href="#result" class="hover:text-blue-600">Result</a>
     </nav>
@@ -113,11 +152,11 @@
     <div class="flex items-end justify-between mb-4">
       <div>
         <h2 class="text-2xl font-bold">① One-liner revision deck</h2>
-        <p class="muted text-slate-600 text-sm">Topic on the left, crisp answer on the right. Types listed where it matters.</p>
+        <p class="muted text-slate-600 text-sm">Topic on the left, a full-sentence explanation on the right. Click a group to expand or collapse.</p>
       </div>
       <span class="pill pill-accent" id="linersPill">—</span>
     </div>
-    <div id="linersContainer" class="space-y-6"></div>
+    <div id="linersContainer" class="space-y-3"></div>
   </section>
 
   <!-- ==================== APP Q&A ==================== -->
@@ -133,17 +172,33 @@
       <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1600&h=360&fit=crop"
            alt="App architecture" class="w-full h-44 object-cover"/>
     </div>
-    <div id="appContainer" class="space-y-2"></div>
+    <div id="appAccordion"></div>
+  </section>
+
+  <!-- ==================== HR QUESTIONS ==================== -->
+  <section id="hr" class="scroll-mt-16">
+    <div class="flex items-end justify-between mb-4">
+      <div>
+        <h2 class="text-2xl font-bold">③ HR interview questions (fresher-friendly)</h2>
+        <p class="muted text-slate-600 text-sm">Behavioural, situational and self-awareness questions with sample responses you can adapt.</p>
+      </div>
+      <span class="pill pill-accent" id="hrPill">—</span>
+    </div>
+    <div class="rounded-xl overflow-hidden border border-slate-200 shadow-sm mb-5">
+      <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1600&h=320&fit=crop"
+           alt="Interview conversation" class="w-full h-40 object-cover"/>
+    </div>
+    <div id="hrContainer" class="space-y-3"></div>
   </section>
 
   <!-- ==================== MCQS ==================== -->
   <section id="mcqs" class="scroll-mt-16">
     <div class="flex items-end justify-between mb-4">
       <div>
-        <h2 class="text-2xl font-bold">③ MCQ practice — mark wrong answers to reveal definitions</h2>
+        <h2 class="text-2xl font-bold">④ MCQ practice — mark wrong answers to reveal definitions</h2>
         <p class="muted text-slate-600 text-sm">
-          Pick an option, then press <em>"Check"</em>. If you were wrong, tick <em>"I got this wrong"</em>
-          — the card turns red and the correct answer + every option's definition become visible.
+          Pick an option, then press <em>"Check"</em>. Correct → celebration animation. Wrong → "Don't worry, you're learning."
+          Every option gets a short definition so you learn what each one actually means.
         </p>
       </div>
       <span class="pill pill-accent" id="mcqsPill">—</span>
@@ -190,316 +245,316 @@
 -------------------------------------------------------------- */
 const ONE_LINERS = [
   { group: "JavaScript Core", items: [
-    { topic: "Hoisting", answer: "Declarations moved to the top of their scope at compile time; `var` is hoisted + initialised as undefined, `let/const` are hoisted but in the TDZ." },
-    { topic: "Closure", answer: "A function that remembers variables from its lexical scope after the outer function returns." },
-    { topic: "Scope", answer: "The region where a binding is accessible.", types: "Global, Function, Block, Module" },
-    { topic: "Event loop", answer: "Runtime mechanism that processes the call stack, microtask queue, and task queue to make JS async-friendly." },
-    { topic: "Microtasks vs Macrotasks", answer: "Microtasks (Promises, queueMicrotask) run before the next macrotask (setTimeout, I/O)." },
-    { topic: "`var` vs `let` vs `const`", answer: "`var` is function-scoped & hoisted; `let/const` are block-scoped; `const` can't be reassigned." },
-    { topic: "Arrow functions", answer: "Shorter syntax with no own `this`, `arguments`, `super`, or `new.target`; can't be used as constructors." },
-    { topic: "Spread vs Rest", answer: "Spread expands iterables; rest collects remaining items into an array/object." },
-    { topic: "Destructuring", answer: "Pattern-matching syntax to unpack arrays or objects into variables." },
-    { topic: "Template literals", answer: "Backtick strings supporting `${expr}` interpolation and multi-line." },
-    { topic: "Promise", answer: "Object representing the eventual completion/failure of an async operation.", types: "Pending, Fulfilled, Rejected" },
-    { topic: "async/await", answer: "Syntactic sugar over Promises making async code read like synchronous." },
-    { topic: "Promise.all vs Promise.allSettled", answer: "`all` rejects on first error; `allSettled` always resolves with per-promise status." },
-    { topic: "Promise.race vs Promise.any", answer: "`race` settles with the first settlement; `any` resolves with the first fulfillment." },
-    { topic: "Debounce", answer: "Delay invocation until N ms after the last call — good for search inputs." },
-    { topic: "Throttle", answer: "Limit function calls to at most once every N ms — good for scroll/resize." },
-    { topic: "`this` binding", answer: "Determined by call site: implicit, explicit (call/apply/bind), new, arrow (lexical)." },
-    { topic: "Prototype chain", answer: "Chain of objects linked via `__proto__` used for property lookup." },
-    { topic: "Classes", answer: "Sugar over prototype-based inheritance with `constructor`, `extends`, `super`." },
-    { topic: "`==` vs `===`", answer: "`==` coerces types; `===` compares value and type." },
-    { topic: "Falsy values", answer: "`false`, `0`, `-0`, `0n`, `''`, `null`, `undefined`, `NaN`." },
-    { topic: "Optional chaining `?.`", answer: "Short-circuits to `undefined` if the left side is null/undefined." },
-    { topic: "Nullish coalescing `??`", answer: "Returns the right side only if the left is `null` or `undefined`." },
-    { topic: "`map` vs `forEach`", answer: "`map` returns a new array; `forEach` returns `undefined` and only side-effects." },
-    { topic: "`reduce`", answer: "Collapses an array into any value via an accumulator." },
-    { topic: "Shallow vs Deep copy", answer: "Shallow copies top level; deep recursively copies nested refs." },
-    { topic: "Modules (ESM)", answer: "`import/export`, statically analysable, strict mode by default, top-level `await`." },
-    { topic: "CommonJS", answer: "`require/module.exports`, synchronous, Node's original module system." },
-    { topic: "Event delegation", answer: "Attach one listener to a common ancestor and use event bubbling to handle children." },
-    { topic: "Garbage collection", answer: "Automatic memory reclamation; V8 uses generational mark-and-sweep." },
-    { topic: "`Set` vs `Map`", answer: "`Set` is a collection of unique values; `Map` is key→value with any key type." },
-    { topic: "WeakMap / WeakSet", answer: "Collections whose keys/values are weakly held so they don't block GC." },
-    { topic: "Immutability in JS", answer: "Use `Object.freeze`, spread/rest, or libraries like Immer to avoid in-place mutation." },
-    { topic: "Error types", answer: "`Error`, `TypeError`, `SyntaxError`, `RangeError`, `ReferenceError`, `URIError`, `EvalError`." },
-    { topic: "`try/catch/finally`", answer: "`finally` always runs — great for cleanup regardless of success/failure." },
-    { topic: "Memoization", answer: "Cache a pure function's results keyed by its args to skip re-computation." },
-    { topic: "Currying", answer: "Transforming `f(a,b,c)` into `f(a)(b)(c)` by returning functions." },
-    { topic: "Partial application", answer: "Pre-filling some arguments of a function to produce a new function." },
-    { topic: "Pure function", answer: "Same input → same output, no side effects." },
-    { topic: "Side effect", answer: "Any change outside a function's return — I/O, DOM, network, globals." },
+    { topic: "Hoisting", answer: "Variable and function declarations are moved to the top of their containing scope at compile time, so `var` is accessible but undefined before its line while `let` and `const` live in a temporal dead zone until declared." },
+    { topic: "Closure", answer: "A closure is a function bundled with references to variables from the lexical scope where it was defined, letting it keep accessing those bindings even after the outer function has returned." },
+    { topic: "Scope", answer: "Scope is the region of a program in which a particular binding is accessible, and JavaScript has four main kinds that developers encounter in daily work.", types: "Global, Function, Block, Module" },
+    { topic: "Event loop", answer: "The event loop is the runtime mechanism that pulls callbacks from the microtask and task queues onto an empty call stack so JavaScript can appear concurrent despite being single-threaded." },
+    { topic: "Microtasks vs Macrotasks", answer: "Microtasks created by promises and queueMicrotask drain completely between each macrotask like setTimeout, setInterval, I/O, or UI events, so promise `.then` fires before the next timer." },
+    { topic: "var vs let vs const", answer: "`var` is function-scoped and silently redeclarable, `let` is block-scoped and reassignable, and `const` is block-scoped and read-only but does not deeply freeze the referenced object." },
+    { topic: "Arrow functions", answer: "Arrow functions have a shorter syntax, lexically capture `this`, `arguments`, `super`, and `new.target` from their surrounding scope, and cannot be used with `new` as constructors." },
+    { topic: "Spread vs Rest", answer: "Spread expands an iterable or object into individual elements or properties, while rest collects any remaining function arguments or object properties into a single array or object." },
+    { topic: "Destructuring", answer: "Destructuring is pattern-matching syntax that unpacks values from arrays or properties from objects into distinct variables, with support for defaults, renames, and nested patterns." },
+    { topic: "Template literals", answer: "Template literals are backtick-delimited strings that support `${expression}` interpolation, multi-line text without concatenation, and tagged usage for building domain-specific string parsers." },
+    { topic: "Promise", answer: "A Promise is an object representing the eventual completion or failure of an asynchronous operation and goes through exactly one of these states over its lifetime.", types: "Pending, Fulfilled, Rejected" },
+    { topic: "async/await", answer: "`async` marks a function as returning a Promise, while `await` pauses its execution until a Promise settles, giving asynchronous code a readable top-to-bottom flow similar to synchronous code." },
+    { topic: "Promise.all vs Promise.allSettled", answer: "`Promise.all` rejects as soon as any input promise rejects, whereas `Promise.allSettled` always resolves with an array describing fulfilled or rejected status of every input promise." },
+    { topic: "Promise.race vs Promise.any", answer: "`Promise.race` resolves or rejects with the first promise to settle in any way, while `Promise.any` resolves with the first fulfilment and only rejects if every input promise rejected." },
+    { topic: "Debounce", answer: "Debouncing delays running a function until a specified idle period has passed without new calls, making it ideal for search inputs or resize handlers that should only fire once the user stops." },
+    { topic: "Throttle", answer: "Throttling caps a function's invocation rate to at most once per interval, which is useful on scroll, drag, and animation handlers to smooth UI work while still responding to continuous events." },
+    { topic: "`this` binding", answer: "The value of `this` is decided by how a function is called: method calls use the receiver, call/apply/bind set it explicitly, `new` binds the new instance, and arrows inherit it lexically." },
+    { topic: "Prototype chain", answer: "Every object has an internal link to another object called its prototype, and property lookups walk this chain until a match is found or the chain terminates at `null`." },
+    { topic: "Classes", answer: "ES2015 classes are syntactic sugar over JavaScript's prototype-based inheritance, offering `constructor`, instance and static methods, `extends`, and `super` while generating prototype-linked objects behind the scenes." },
+    { topic: "== vs ===", answer: "`==` performs type coercion before comparing values, which produces surprising results, whereas `===` performs a strict comparison that only returns true when both type and value match exactly." },
+    { topic: "Falsy values", answer: "JavaScript treats exactly eight values as falsy: `false`, `0`, `-0`, `0n`, `''`, `null`, `undefined`, and `NaN`; everything else, including empty arrays and objects, is truthy." },
+    { topic: "Optional chaining `?.`", answer: "The optional chaining operator short-circuits a property, method, or array access to `undefined` when the value to its left is `null` or `undefined`, avoiding deep null checks." },
+    { topic: "Nullish coalescing `??`", answer: "The nullish coalescing operator returns the right-hand operand only when the left side is `null` or `undefined`, preserving valid values like `0` and `''` that `||` would discard." },
+    { topic: "`map` vs `forEach`", answer: "`Array.map` creates and returns a new array of the transformed values, while `forEach` executes a callback per element purely for side effects and returns `undefined`." },
+    { topic: "`reduce`", answer: "`Array.reduce` accumulates a running value by applying a reducer to each element, letting you collapse an array into any single value such as a sum, object, or another array." },
+    { topic: "Shallow vs Deep copy", answer: "A shallow copy duplicates only the top level of a structure and still shares nested references, while a deep copy recursively clones every nested value so no references are shared." },
+    { topic: "Modules (ESM)", answer: "ECMAScript Modules use `import`/`export`, are statically analysable, run in strict mode by default, support top-level `await`, and allow tree-shaking because imports are known at parse time." },
+    { topic: "CommonJS", answer: "CommonJS is Node's original module system using `require` and `module.exports`; it resolves synchronously and remains the default for many npm packages on the backend." },
+    { topic: "Event delegation", answer: "Attaching a single listener on a common ancestor and using event bubbling to identify the real target keeps memory low and still handles dynamically added children without re-binding." },
+    { topic: "Garbage collection", answer: "JavaScript engines reclaim memory automatically using generational mark-and-sweep algorithms, typically a fast young-generation collector plus a slower full collector for objects that survive long." },
+    { topic: "`Set` vs `Map`", answer: "`Set` stores a unique collection of values where membership is tested by identity, while `Map` associates arbitrary keys (including objects) with values and preserves insertion order." },
+    { topic: "WeakMap / WeakSet", answer: "WeakMap and WeakSet hold weak references to their keys or values, letting the garbage collector reclaim them when no other reference remains, which is great for metadata caches." },
+    { topic: "Immutability in JS", answer: "You can enforce immutability by returning new objects via spread, freezing with `Object.freeze`, or using structural-sharing libraries like Immer, Immutable.js, or persistent data-structure helpers." },
+    { topic: "Error types", answer: "Built-in error constructors include Error, TypeError, SyntaxError, RangeError, ReferenceError, URIError, and EvalError, with modern engines also exposing AggregateError for grouped failures." },
+    { topic: "try/catch/finally", answer: "`try` wraps code that may throw, `catch` receives the error for handling, and `finally` always runs regardless of outcome which makes it ideal for releasing resources or clearing state." },
+    { topic: "Memoization", answer: "Memoization caches the result of a pure function keyed by its arguments so repeated calls with the same inputs skip recomputation, trading memory for speed on expensive deterministic calls." },
+    { topic: "Currying", answer: "Currying transforms a function of multiple arguments into a sequence of unary functions, each returning the next, which composes cleanly and lets you create pre-configured helpers." },
+    { topic: "Partial application", answer: "Partial application pre-fills some of a function's arguments and returns a new function expecting the rest, often implemented with `bind` or a small higher-order helper." },
+    { topic: "Pure function", answer: "A pure function returns the same output for the same input and causes no observable side effects, which makes it trivially testable, memoisable, and safe to run in parallel." },
+    { topic: "Side effect", answer: "A side effect is any observable change a function makes outside its return value, such as mutating state, writing to the DOM, logging, making requests, or touching globals." },
   ]},
 
   { group: "TypeScript", items: [
-    { topic: "TypeScript", answer: "Superset of JavaScript adding optional static typing, interfaces, generics, enums." },
-    { topic: "`interface` vs `type`", answer: "Both describe shapes; interfaces are open (merge-able), types can model unions/intersections/primitives." },
-    { topic: "Generics", answer: "Parameterised types that let you reuse logic across types without `any`." },
-    { topic: "Union vs Intersection", answer: "`A | B` is either; `A & B` is both combined." },
-    { topic: "`unknown` vs `any`", answer: "`unknown` must be narrowed before use; `any` opts out of type-checking entirely." },
-    { topic: "Narrowing", answer: "Compiler shrinks a type using `typeof`, `instanceof`, equality, discriminants, or user-defined guards." },
-    { topic: "Mapped types", answer: "Build new types by iterating keys: `{ [K in keyof T]: … }`." },
-    { topic: "Utility types", answer: "`Partial`, `Required`, `Pick`, `Omit`, `Record`, `Readonly`, `ReturnType`, `Parameters`." },
-    { topic: "Enum", answer: "Named set of constants; numeric by default, can be string-based." },
-    { topic: "`as const`", answer: "Freezes literal types so arrays/tuples are read-only and literal-typed." },
+    { topic: "TypeScript", answer: "TypeScript is a strongly-typed superset of JavaScript that compiles to plain JS and adds interfaces, generics, enums, and rich tooling, catching entire classes of bugs before the code runs." },
+    { topic: "interface vs type", answer: "Both describe the shape of data, but interfaces are open for declaration merging and extension, while `type` aliases can also express unions, intersections, primitives, and conditional types." },
+    { topic: "Generics", answer: "Generics are parameterised types that let you reuse the same function or class across different concrete types while preserving full type information instead of falling back to `any`." },
+    { topic: "Union vs Intersection", answer: "`A | B` describes a value that is either A or B so only shared members are safe, while `A & B` describes a value that has every property of both A and B combined." },
+    { topic: "unknown vs any", answer: "`unknown` accepts any value but forces you to narrow it before use, keeping the type system honest, whereas `any` disables type checking entirely for that binding." },
+    { topic: "Narrowing", answer: "Narrowing is how the compiler progressively shrinks a broader type to a more specific one using `typeof`, `instanceof`, equality comparisons, discriminated unions, and user-defined type guards." },
+    { topic: "Mapped types", answer: "Mapped types construct a new type by iterating over the keys of another type, such as `{ [K in keyof T]: Readonly<T[K]> }`, which powers many built-in utility types." },
+    { topic: "Utility types", answer: "TypeScript ships handy built-in generics such as Partial, Required, Pick, Omit, Record, Readonly, ReturnType, and Parameters that cover most common type transformations in day-to-day code." },
+    { topic: "Enum", answer: "An enum is a named set of related constants that can be numeric (auto-incremented) or string-valued, giving readable identifiers for discrete states instead of magic numbers scattered throughout code." },
+    { topic: "`as const`", answer: "The `as const` assertion tells TypeScript to treat an expression's literal values as read-only, which locks in exact string and tuple types useful for state machines and route constants." },
   ]},
 
   { group: "React", items: [
-    { topic: "React", answer: "Declarative, component-based UI library using a virtual DOM and one-way data flow." },
-    { topic: "JSX", answer: "JS syntax extension compiled to `React.createElement` calls." },
-    { topic: "Virtual DOM", answer: "In-memory tree React diffs against to compute minimal real DOM updates." },
-    { topic: "Reconciliation", answer: "Diffing algorithm that pairs old + new trees using element type and `key`." },
-    { topic: "`key` prop", answer: "Stable identity for list items so React can reuse / move DOM nodes correctly." },
-    { topic: "Props", answer: "Immutable inputs from parent to child." },
-    { topic: "State", answer: "Mutable, component-owned data that triggers re-render when changed." },
-    { topic: "`useState`", answer: "Hook that returns a stateful value + setter; triggers re-render on update." },
-    { topic: "`useEffect`", answer: "Hook for side effects after render; cleanup returned function runs on unmount or dep change." },
-    { topic: "`useMemo`", answer: "Memoises a computed value across renders based on deps." },
-    { topic: "`useCallback`", answer: "Memoises a function reference across renders based on deps." },
-    { topic: "`useRef`", answer: "Mutable container that persists across renders without causing re-render." },
-    { topic: "`useContext`", answer: "Reads the nearest Provider value for a Context — avoids prop drilling." },
-    { topic: "`useReducer`", answer: "Alternative to `useState` for complex transitions via reducer pattern." },
-    { topic: "Custom hooks", answer: "Functions starting with `use` that compose built-in hooks to share logic." },
-    { topic: "Controlled input", answer: "Input value driven by React state; `onChange` updates state." },
-    { topic: "Uncontrolled input", answer: "Input managed by the DOM; accessed via refs." },
-    { topic: "Context API", answer: "Provider/consumer pair for sharing values without prop drilling." },
-    { topic: "React Router", answer: "Client-side routing lib: `<BrowserRouter>`, `<Routes>`, `<Route>`, `useNavigate`, `useParams`." },
-    { topic: "Lifting state up", answer: "Move shared state to the closest common ancestor to sync siblings." },
-    { topic: "Higher-order component (HOC)", answer: "Function that takes a component and returns a new one with extra behaviour." },
-    { topic: "Render prop", answer: "Pattern where a component takes a function prop to decide what to render." },
-    { topic: "Fragment", answer: "`<>` wrapper that groups children without adding a DOM node." },
-    { topic: "Portal", answer: "`createPortal` renders children into a different DOM node outside the parent." },
-    { topic: "Suspense", answer: "Boundary that shows a fallback while a child is waiting (data/lazy component)." },
-    { topic: "`React.lazy`", answer: "Dynamically imports a component for code-splitting; works with Suspense." },
-    { topic: "StrictMode", answer: "Dev-only wrapper that runs effects/renders twice to surface side-effect bugs." },
-    { topic: "Error boundary", answer: "Class component with `componentDidCatch` that renders fallback UI on child errors." },
-    { topic: "Reconciliation keys mistake", answer: "Using array index as key causes bugs on reorder." },
-    { topic: "Why re-render", answer: "State change in the component or any ancestor passing new props, or context change." },
-    { topic: "Preventing re-render", answer: "`React.memo`, `useMemo`, `useCallback`, selector subscriptions, split components." },
-    { topic: "Controlled vs Uncontrolled", answer: "Controlled = React state source of truth; Uncontrolled = DOM is source of truth." },
-    { topic: "Server Components (RSC)", answer: "React components that run on the server, send HTML/RSC payload, zero JS for them on the client." },
-    { topic: "Redux", answer: "Predictable state container with single store, actions, reducers, pure updates." },
-    { topic: "Redux Toolkit", answer: "Official, opinionated Redux API using `createSlice`, `createAsyncThunk`, Immer." },
-    { topic: "React Query / TanStack Query", answer: "Server-state cache with built-in fetching, caching, de-dup, revalidation." },
-    { topic: "React 18 features", answer: "Automatic batching, concurrent rendering, `useTransition`, `useDeferredValue`, Suspense for data." },
+    { topic: "React", answer: "React is a declarative, component-based UI library that uses a virtual DOM and one-way data flow, letting you describe what the UI should look like for a given state rather than how to update it." },
+    { topic: "JSX", answer: "JSX is a syntax extension that looks like HTML inside JavaScript and is compiled to `React.createElement` calls, giving you a familiar markup-like way to express component trees." },
+    { topic: "Virtual DOM", answer: "The virtual DOM is a lightweight JavaScript representation of the UI that React diffs against the previous version to compute the minimal set of real DOM mutations each render." },
+    { topic: "Reconciliation", answer: "Reconciliation is the diffing algorithm that walks old and new virtual trees side-by-side, pairing nodes by element type and `key` to reuse DOM efficiently and avoid wasted work." },
+    { topic: "`key` prop", answer: "The `key` prop gives each list item a stable identity across renders so React can correctly reuse, insert, delete, and reorder DOM nodes instead of recreating them from scratch." },
+    { topic: "Props", answer: "Props are immutable inputs flowing from parent to child components, acting like function arguments and triggering a re-render of the child whenever their values change by reference." },
+    { topic: "State", answer: "State is mutable data owned by a component that, when updated via the setter, schedules a re-render of that component and all of its descendants that depend on the changed value." },
+    { topic: "useState", answer: "`useState(initial)` returns the current state value and a setter function; calling the setter with a new value (or an updater function) schedules a re-render with the new state." },
+    { topic: "useEffect", answer: "`useEffect(fn, deps)` runs the effect after commit, lets you perform side effects like data fetching or subscriptions, and runs the returned cleanup function on unmount or when deps change." },
+    { topic: "useMemo", answer: "`useMemo(fn, deps)` caches the return value of a potentially expensive computation between renders and only recomputes when one of its dependencies has changed." },
+    { topic: "useCallback", answer: "`useCallback(fn, deps)` returns the same function reference across renders until a dependency changes, which keeps memoised children from re-rendering unnecessarily." },
+    { topic: "useRef", answer: "`useRef(initial)` creates a mutable `{ current }` container that persists across renders without triggering any re-render, making it useful for DOM nodes, timers, and stale-closure fixes." },
+    { topic: "useContext", answer: "`useContext(Context)` reads the value of the nearest matching `<Context.Provider>` above the component, replacing prop drilling for shared values like themes, auth, or routing." },
+    { topic: "useReducer", answer: "`useReducer(reducer, initial)` is a more structured alternative to `useState` for complex transitions, grouping updates under named actions dispatched to a pure reducer function." },
+    { topic: "Custom hooks", answer: "Custom hooks are regular functions whose names start with `use` and that compose built-in hooks to package up reusable stateful logic without needing higher-order components or render props." },
+    { topic: "Controlled input", answer: "A controlled input binds its `value` to React state and updates state in `onChange`, making React the single source of truth which simplifies validation, formatting, and submission logic." },
+    { topic: "Uncontrolled input", answer: "An uncontrolled input lets the DOM own the value, and the parent reads it via a ref when needed; this is simpler but harder to validate or coordinate with other state." },
+    { topic: "Context API", answer: "React's Context API provides a Provider/Consumer pair for sharing values deep in the tree without prop drilling, best used sparingly for values that genuinely cross many layers." },
+    { topic: "React Router", answer: "React Router is the de-facto client-side routing library offering `<BrowserRouter>`, `<Routes>`, `<Route>`, `useNavigate`, `useParams`, and nested routes built on URL-driven state management." },
+    { topic: "Lifting state up", answer: "Lifting state up means moving shared data into the closest common ancestor of the components that need it so sibling components can stay synchronised through props and callbacks." },
+    { topic: "Higher-order component (HOC)", answer: "A higher-order component is a function that takes a component and returns an enhanced version wrapped with extra behaviour; largely superseded by custom hooks for logic reuse." },
+    { topic: "Render prop", answer: "The render-prop pattern passes a function as a prop and lets the receiving component call it with internal state to decide what to render, enabling flexible composition without HOCs." },
+    { topic: "Fragment", answer: "`<>` or `<React.Fragment>` groups a list of children with no extra wrapper DOM node, which helps you return multiple elements from a component without breaking semantic layouts." },
+    { topic: "Portal", answer: "`createPortal(children, container)` renders children into any DOM node outside the usual parent hierarchy, which is ideal for modals, tooltips, toasts, and overlays that need their own stacking context." },
+    { topic: "Suspense", answer: "`<Suspense fallback={…}>` is a boundary that shows a fallback UI while descendant components are waiting on lazy imports or Suspense-compatible data, orchestrating loading states declaratively." },
+    { topic: "React.lazy", answer: "`React.lazy(() => import('./Comp'))` turns a dynamic import into a renderable component that must be used inside a Suspense boundary, enabling automatic code-splitting of routes and features." },
+    { topic: "StrictMode", answer: "`<React.StrictMode>` is a development-only wrapper that intentionally double-invokes components and effects to surface side-effect bugs and ensures code is ready for future concurrent features." },
+    { topic: "Error boundary", answer: "An error boundary is a class component implementing `componentDidCatch` or `static getDerivedStateFromError` that catches rendering errors in its subtree and renders a fallback UI instead of crashing." },
+    { topic: "Reconciliation keys mistake", answer: "Using array indexes as `key` on a list that can be reordered or filtered causes React to misidentify items and leads to stale state, wrong inputs, and visual glitches." },
+    { topic: "Why re-render", answer: "A component re-renders when its own state changes, when it receives new props (by reference), when a context it subscribes to updates, or when its parent re-renders without memoisation." },
+    { topic: "Preventing re-render", answer: "Avoid wasted re-renders with `React.memo` on pure components, `useMemo`/`useCallback` for stable references, splitting components to isolate churn, and selector-based subscriptions for context/stores." },
+    { topic: "Controlled vs Uncontrolled", answer: "In a controlled component React state is the single source of truth and the input is driven by props, whereas uncontrolled components let the DOM own state and parents read via refs when needed." },
+    { topic: "Server Components (RSC)", answer: "React Server Components render on the server, stream their output, and ship zero JavaScript for themselves to the client, dramatically cutting bundle size for content-heavy UIs." },
+    { topic: "Redux", answer: "Redux is a predictable client state container built around a single store, plain-object actions, and pure reducers, enabling time-travel debugging and strict separation of state updates from UI." },
+    { topic: "Redux Toolkit", answer: "Redux Toolkit is the official, opinionated API that removes most Redux boilerplate using `createSlice`, `createAsyncThunk`, and Immer so you can write 'mutations' that safely produce immutable updates." },
+    { topic: "React Query / TanStack Query", answer: "TanStack Query is a server-state cache that handles fetching, caching, deduping, background refetching, pagination, and stale-while-revalidate for you so you can delete most data-fetching useEffects." },
+    { topic: "React 18 features", answer: "React 18 shipped automatic batching, concurrent rendering, the new `createRoot` API, `useTransition`, `useDeferredValue`, `useId`, Suspense for data fetching, and streaming SSR via pipeable streams." },
   ]},
 
   { group: "Node.js & Express", items: [
-    { topic: "Node.js", answer: "JavaScript runtime built on V8 with non-blocking I/O via libuv." },
-    { topic: "Event loop (Node)", answer: "Phases: timers → pending callbacks → idle → poll → check → close callbacks." },
-    { topic: "libuv", answer: "C library powering Node's event loop, thread pool, and async I/O primitives." },
-    { topic: "Single-threaded?", answer: "JS runs on one main thread; I/O is offloaded to libuv's thread pool (default size 4)." },
-    { topic: "Streams", answer: "Interfaces for reading/writing data piece-by-piece.", types: "Readable, Writable, Duplex, Transform" },
-    { topic: "Buffers", answer: "Fixed-size byte containers outside V8 heap for binary data." },
-    { topic: "`require` vs `import`", answer: "CommonJS vs ESM; Node supports both with `.cjs/.mjs` or `\"type\":\"module\"`." },
-    { topic: "`process.env`", answer: "Object holding environment variables available to the process." },
-    { topic: "Cluster", answer: "Spawns worker processes sharing the same port to use multiple cores." },
-    { topic: "Worker threads", answer: "True multithreading in Node for CPU-heavy JS work." },
-    { topic: "Express", answer: "Minimal, un-opinionated web framework built on top of Node's `http` module." },
-    { topic: "Middleware", answer: "Function `(req, res, next)` that sits in the request pipeline." },
-    { topic: "Error-handling middleware", answer: "Signature `(err, req, res, next)`; Express routes errors to it automatically." },
-    { topic: "Route handlers", answer: "Functions tied to an HTTP method + path that send the response." },
-    { topic: "Router", answer: "Mini-app you can `.use()`-mount to organise routes." },
-    { topic: "Body parsing", answer: "`express.json()` / `express.urlencoded()` parse request bodies into `req.body`." },
-    { topic: "CORS", answer: "Cross-Origin Resource Sharing; browsers block cross-origin calls unless server sends the right headers." },
-    { topic: "Helmet", answer: "Middleware that sets security-related HTTP headers by default." },
-    { topic: "Rate limiting", answer: "Blocks too many requests from the same IP/user to prevent abuse." },
-    { topic: "Winston / Morgan", answer: "Structured logger / HTTP access logger for Node apps." },
-    { topic: "pm2", answer: "Process manager with clustering, restart on crash, logs, metrics." },
-    { topic: "REST", answer: "Architectural style using HTTP verbs and resources; stateless, cacheable, uniform interface." },
-    { topic: "Idempotent methods", answer: "GET, HEAD, PUT, DELETE — repeating the call doesn't change the end state." },
-    { topic: "HTTP status 2xx", answer: "Success — 200 OK, 201 Created, 204 No Content." },
-    { topic: "HTTP status 3xx", answer: "Redirection — 301 Moved Permanently, 302 Found, 304 Not Modified." },
-    { topic: "HTTP status 4xx", answer: "Client error — 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 422 Unprocessable, 429 Too Many Requests." },
-    { topic: "HTTP status 5xx", answer: "Server error — 500 Internal, 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout." },
-    { topic: "GraphQL", answer: "Query language letting clients ask exactly for fields they need from a typed schema." },
-    { topic: "WebSocket", answer: "Full-duplex persistent TCP connection over a single handshake upgraded from HTTP." },
-    { topic: "SSE", answer: "Server-Sent Events — server pushes text/event-stream to the browser over HTTP." },
+    { topic: "Node.js", answer: "Node.js is a JavaScript runtime built on Google's V8 engine, pairing an event loop and non-blocking I/O via libuv to handle thousands of concurrent connections with a small memory footprint." },
+    { topic: "Event loop (Node)", answer: "Node's event loop cycles through distinct phases—timers, pending callbacks, idle/prepare, poll, check, and close callbacks—with microtasks draining between each stage to run async work in order." },
+    { topic: "libuv", answer: "libuv is the C library underneath Node that provides the cross-platform event loop, a thread pool for blocking operations, async file I/O, timers, and networking primitives." },
+    { topic: "Single-threaded?", answer: "JavaScript itself runs on a single main thread in Node, while CPU-free async operations like file system, DNS, crypto and user-triggered work happen on libuv's default four-thread pool." },
+    { topic: "Streams", answer: "Streams are interfaces for processing data in small chunks rather than buffering everything in memory, forming the backbone of efficient file, HTTP, and TCP handling in Node.", types: "Readable, Writable, Duplex, Transform" },
+    { topic: "Buffers", answer: "Buffers are fixed-size, raw-byte containers stored outside V8's heap, letting Node work with binary data like network payloads, file contents, and crypto operations efficiently." },
+    { topic: "require vs import", answer: "`require` and `module.exports` form Node's synchronous CommonJS module system, while `import`/`export` are ECMAScript Modules which Node recognises for `.mjs` files or packages marked `type: module`." },
+    { topic: "process.env", answer: "`process.env` is an object populated from the operating system's environment variables plus any injected via tools like `dotenv`, giving you a conventional place to pass secrets and configuration." },
+    { topic: "Cluster", answer: "The `cluster` module spawns worker processes that share the same server port, letting a Node app spread incoming connections across every CPU core without rewriting the application code." },
+    { topic: "Worker threads", answer: "Worker threads give Node true in-process multithreading with shared memory via SharedArrayBuffer, which is best for CPU-bound JavaScript such as parsing, compression, or heavy maths." },
+    { topic: "Express", answer: "Express is a minimal, un-opinionated web framework for Node built on top of the `http` module, offering routing, middleware composition, and a huge community ecosystem for quick API delivery." },
+    { topic: "Middleware", answer: "Middleware is any function with the signature `(req, res, next)` that sits in the request-handling pipeline and can inspect, mutate, short-circuit, or forward the request to the next handler." },
+    { topic: "Error-handling middleware", answer: "Express identifies error middleware by its four-argument signature `(err, req, res, next)` and automatically forwards errors thrown or passed via `next(err)` to it for centralised handling." },
+    { topic: "Route handlers", answer: "Route handlers are the terminal functions tied to an HTTP method plus path that run after middleware and send the response, forming the controller layer of an Express application." },
+    { topic: "Router", answer: "`express.Router()` creates a mini-app you can mount at a path with `app.use`, letting you split large APIs into cohesive modules each with their own middleware and sub-routes." },
+    { topic: "Body parsing", answer: "`express.json()` parses JSON request bodies into `req.body`, `express.urlencoded()` parses form submissions, and third-party parsers like `multer` or `busboy` handle multipart file uploads." },
+    { topic: "CORS", answer: "Cross-Origin Resource Sharing is a browser-enforced mechanism that blocks cross-origin requests unless the server explicitly allows them with headers like `Access-Control-Allow-Origin` and preflight responses." },
+    { topic: "Helmet", answer: "Helmet is Express middleware that sets a curated bundle of security-related HTTP headers by default—like CSP, HSTS, X-Content-Type-Options, and X-Frame-Options—with minimal configuration." },
+    { topic: "Rate limiting", answer: "Rate limiting caps how many requests a given IP, user, or token can make in a time window, protecting your backend from abuse, brute-force login attempts, and accidental client loops." },
+    { topic: "Winston / Morgan", answer: "Winston is a structured logger for application events supporting levels and transports, while Morgan is a tiny HTTP access logger that prints a concise line per request during development." },
+    { topic: "pm2", answer: "pm2 is a production process manager that keeps your Node app running, clusters it across CPUs, reloads on code changes, aggregates logs, and exposes metrics and health probes." },
+    { topic: "REST", answer: "REST is an architectural style where clients interact with resources identified by URIs using the uniform set of HTTP verbs, remaining stateless so each request contains everything needed." },
+    { topic: "Idempotent methods", answer: "An idempotent method yields the same end state no matter how many times you repeat it; HTTP GET, HEAD, PUT, and DELETE are idempotent by specification, whereas POST is not." },
+    { topic: "HTTP status 2xx", answer: "2xx codes indicate success, with 200 OK for generic success, 201 Created with a Location header for new resources, 204 No Content for successful deletes and empty PUT responses." },
+    { topic: "HTTP status 3xx", answer: "3xx codes tell the client to look elsewhere; 301 is a permanent move, 302/307 are temporary redirects, 304 Not Modified signals a valid cached copy can still be used." },
+    { topic: "HTTP status 4xx", answer: "4xx codes mean the client made an error: 400 malformed request, 401 missing/invalid auth, 403 forbidden, 404 not found, 409 conflict, 422 unprocessable entity, 429 too many requests." },
+    { topic: "HTTP status 5xx", answer: "5xx codes signal server-side problems: 500 internal error, 502 bad gateway from an upstream, 503 service unavailable during overload or maintenance, 504 upstream timeout while waiting." },
+    { topic: "GraphQL", answer: "GraphQL is a query language and runtime for APIs that exposes a typed schema, letting clients ask for exactly the fields they need in a single request and avoiding over- and under-fetching." },
+    { topic: "WebSocket", answer: "WebSocket is a full-duplex persistent TCP connection established via an HTTP upgrade handshake, enabling low-latency real-time messaging between client and server after the connection is open." },
+    { topic: "SSE", answer: "Server-Sent Events let a server push a stream of UTF-8 text events to the browser over a long-lived HTTP response, which is a simpler alternative to WebSockets when traffic is one-directional." },
   ]},
 
   { group: "MongoDB & Mongoose", items: [
-    { topic: "MongoDB", answer: "Document-oriented NoSQL database storing BSON documents in collections." },
-    { topic: "BSON", answer: "Binary JSON — MongoDB's storage/transport format with extra types like ObjectId, Date, Decimal128." },
-    { topic: "ObjectId", answer: "12-byte unique id: timestamp (4) + machine (3) + pid (2) + counter (3)." },
-    { topic: "Collection vs Document", answer: "Collection = group of documents (no fixed schema); Document = JSON-like record." },
-    { topic: "Index types", answer: "Single-field, compound, unique, text, geospatial, hashed, TTL, wildcard, partial." },
-    { topic: "Compound index order", answer: "Fields in equality then sort then range — ESR rule." },
-    { topic: "Covered query", answer: "Query that can be answered entirely from an index without scanning docs." },
-    { topic: "Aggregation pipeline", answer: "Stage-based transformation: `$match`, `$group`, `$project`, `$lookup`, `$unwind`, `$sort`, `$limit`, `$facet`." },
-    { topic: "`$lookup`", answer: "Pipeline stage that performs a left-outer join to another collection." },
-    { topic: "Transactions", answer: "Multi-document ACID transactions via sessions; needed only when atomicity across docs matters." },
-    { topic: "Sharding", answer: "Horizontal partitioning of data across shards using a shard key." },
-    { topic: "Replica set", answer: "Group of mongod processes keeping the same data for HA (1 primary + N secondaries)." },
-    { topic: "Write concern", answer: "Controls how many replica members must acknowledge a write (`w:1`, `w:majority`)." },
-    { topic: "Read preference", answer: "Which replica member satisfies reads: `primary`, `secondary`, `nearest`, `secondaryPreferred`." },
-    { topic: "Mongoose", answer: "ODM for Node adding schemas, models, validation, middleware, population to the Mongo driver." },
-    { topic: "Schema", answer: "Blueprint describing fields, types, defaults, validators and virtuals." },
-    { topic: "Model", answer: "Compiled form of a schema, used to interact with a collection." },
-    { topic: "`populate`", answer: "Replaces ref ObjectIds with the actual document fetched from the referenced collection." },
-    { topic: "Mongoose middleware", answer: "Pre/post hooks around validate, save, remove, aggregate, etc." },
-    { topic: "`lean()`", answer: "Returns plain JS objects (not Mongoose docs) — faster, read-only." },
-    { topic: "Validation", answer: "Built-in required, min, max, enum, match, plus custom validators." },
-    { topic: "Virtuals", answer: "Derived fields not stored in Mongo — e.g. fullName from first+last." },
-    { topic: "Timestamps option", answer: "Mongoose auto-managing `createdAt` and `updatedAt` when `{ timestamps: true }`." },
+    { topic: "MongoDB", answer: "MongoDB is a document-oriented NoSQL database that stores flexible BSON documents inside collections, scaling horizontally via sharding and offering rich query language and secondary indexes." },
+    { topic: "BSON", answer: "BSON (Binary JSON) is MongoDB's storage and wire format that extends JSON with typed values like ObjectId, Date, Int32, Int64, Decimal128, and binary data for efficient server-side processing." },
+    { topic: "ObjectId", answer: "An ObjectId is a 12-byte identifier combining a 4-byte timestamp, 5-byte random process-specific value, and 3-byte incrementing counter, giving globally unique ids without coordination." },
+    { topic: "Collection vs Document", answer: "A collection is a schema-less group of documents (analogous to a table), while a document is a single JSON-like record stored as BSON with any shape that fits the application's needs." },
+    { topic: "Index types", answer: "MongoDB offers single-field, compound, unique, multikey (for arrays), text, geospatial 2dsphere, hashed, wildcard, TTL for expiring documents, and partial indexes that match only a subset of docs." },
+    { topic: "Compound index order", answer: "The ESR rule says compound index fields should be ordered as Equality, then Sort, then Range for the planner to serve filter and sort using a single index scan." },
+    { topic: "Covered query", answer: "A covered query is one the engine can answer entirely from an index without touching the documents, which happens when projected fields and filter are all present in the index." },
+    { topic: "Aggregation pipeline", answer: "The aggregation framework applies a sequence of stages—`$match`, `$group`, `$project`, `$lookup`, `$unwind`, `$sort`, `$limit`, `$facet`—each transforming the stream of documents from the previous stage." },
+    { topic: "$lookup", answer: "`$lookup` is the aggregation stage that performs a left-outer join against another collection, embedding matched documents into an array field on each input document." },
+    { topic: "Transactions", answer: "MongoDB supports multi-document ACID transactions via sessions started with `startTransaction`, useful when a logical unit touches several documents or collections that must commit or roll back together." },
+    { topic: "Sharding", answer: "Sharding horizontally partitions a collection across cluster nodes based on a chosen shard key, and a router (`mongos`) directs each operation to the shards that own the relevant data." },
+    { topic: "Replica set", answer: "A replica set is a group of mongod processes maintaining the same data, with one primary accepting writes and secondaries replicating via the oplog, providing high availability and failover." },
+    { topic: "Write concern", answer: "Write concern specifies how many replica members must acknowledge a write before the driver considers it successful; `w:1` is the primary only, while `w:majority` provides durability under failures." },
+    { topic: "Read preference", answer: "Read preference tells the driver which replica member should serve reads, with options like `primary`, `primaryPreferred`, `secondary`, `secondaryPreferred`, or `nearest` depending on freshness and latency needs." },
+    { topic: "Mongoose", answer: "Mongoose is an Object-Data Mapping library for Node that layers schemas, models, validation, middleware hooks, and population on top of the official MongoDB driver for ergonomic application code." },
+    { topic: "Schema", answer: "A Mongoose Schema describes the fields, data types, defaults, validators, virtuals, hooks, and options for a collection, acting as a blueprint the model uses when reading and writing documents." },
+    { topic: "Model", answer: "A Mongoose Model is the compiled form of a Schema bound to a specific MongoDB collection, exposing static methods like `find`, `create`, `aggregate` and returning rich document instances." },
+    { topic: "populate", answer: "`populate` traverses `ObjectId` references and replaces them with the actual referenced documents in the result, letting Mongoose simulate joins for relationships across collections." },
+    { topic: "Mongoose middleware", answer: "Mongoose middleware (hooks) lets you run code before or after operations like `validate`, `save`, `remove`, `updateOne`, `findOneAndUpdate`, `aggregate`, and queries for cross-cutting behaviour." },
+    { topic: "lean()", answer: "`.lean()` on a Mongoose query returns plain JavaScript objects instead of hydrated Mongoose documents, which is noticeably faster and lighter when you only need to read data." },
+    { topic: "Validation", answer: "Mongoose offers built-in validators like `required`, `min`/`max`, `enum`, `match`, `minlength`, and `maxlength`, plus custom functions and async validators for domain-specific rules." },
+    { topic: "Virtuals", answer: "Virtuals are schema fields that are computed in memory rather than stored in MongoDB—for example combining `firstName` and `lastName` into `fullName`—and can be serialised with `toJSON` options." },
+    { topic: "Timestamps option", answer: "Setting `{ timestamps: true }` on a schema tells Mongoose to automatically maintain `createdAt` and `updatedAt` fields on every save and update, eliminating boilerplate on most models." },
   ]},
 
   { group: "Databases (SQL / general)", items: [
-    { topic: "ACID", answer: "Atomicity, Consistency, Isolation, Durability — classic RDBMS transaction guarantees." },
-    { topic: "BASE", answer: "Basically Available, Soft state, Eventually consistent — NoSQL trade-off." },
-    { topic: "CAP theorem", answer: "A distributed store can guarantee at most 2 of Consistency, Availability, Partition tolerance." },
-    { topic: "Normalisation", answer: "Organising tables to reduce redundancy via 1NF→3NF→BCNF." },
-    { topic: "Denormalisation", answer: "Intentional redundancy for read performance." },
-    { topic: "Primary key", answer: "Unique, non-null column(s) that identify a row." },
-    { topic: "Foreign key", answer: "Column referencing a primary key in another table, enforcing referential integrity." },
-    { topic: "Join types", answer: "INNER, LEFT, RIGHT, FULL OUTER, CROSS, SELF." },
-    { topic: "Index (B-tree)", answer: "Balanced tree enabling O(log n) lookups, range scans, ordered reads." },
-    { topic: "SQL vs NoSQL", answer: "Schema-rigid relational with joins vs schema-flexible document/KV/wide-column stores." },
-    { topic: "Transaction isolation levels", answer: "Read Uncommitted, Read Committed, Repeatable Read, Serializable." },
-    { topic: "Deadlock", answer: "Two or more transactions each waiting on a lock held by the other; DB usually aborts one." },
+    { topic: "ACID", answer: "ACID is the shorthand for the four guarantees classic relational databases make: Atomicity of multi-step transactions, Consistency with constraints, Isolation from concurrent work, and Durability after commit." },
+    { topic: "BASE", answer: "BASE describes NoSQL trade-offs where systems are Basically Available even under partial failure, Soft state that may change without input, and Eventually consistent after propagation delays." },
+    { topic: "CAP theorem", answer: "The CAP theorem states that a distributed data store can simultaneously provide only two of Consistency, Availability, and Partition tolerance, forcing design choices under real-world network splits." },
+    { topic: "Normalisation", answer: "Normalisation organises a schema into tables that reduce redundancy and update anomalies, progressing from 1NF through 3NF and BCNF by splitting repeating groups and non-key dependencies." },
+    { topic: "Denormalisation", answer: "Denormalisation intentionally duplicates data across tables (or embeds it) to make common read queries cheaper, trading some write complexity for lower latency and simpler read paths." },
+    { topic: "Primary key", answer: "A primary key is one or more columns whose values uniquely identify each row in a table, must be non-null, and usually backs the table's clustered index or physical storage order." },
+    { topic: "Foreign key", answer: "A foreign key is a column (or set of columns) whose values reference the primary key of another table, enforcing referential integrity so you cannot orphan child rows without cascading rules." },
+    { topic: "Join types", answer: "Common SQL joins are INNER (only matches), LEFT and RIGHT OUTER (keep all rows from one side), FULL OUTER (keep both sides), CROSS (Cartesian product), and SELF-joins between a table and itself." },
+    { topic: "Index (B-tree)", answer: "Most relational indexes are B-trees, balanced multi-way search trees that provide O(log n) lookups, efficient range scans, ordered reads, and good I/O behaviour by packing many keys per node." },
+    { topic: "SQL vs NoSQL", answer: "SQL databases enforce rigid schemas and relational joins with strong ACID guarantees, while NoSQL stores (document, key-value, wide-column, graph) relax schema and consistency for flexibility and scale." },
+    { topic: "Transaction isolation levels", answer: "ANSI defines four isolation levels—Read Uncommitted, Read Committed, Repeatable Read, and Serializable—trading off exposure to dirty reads, non-repeatable reads, phantom reads, and concurrency throughput." },
+    { topic: "Deadlock", answer: "A deadlock occurs when two or more transactions each hold a lock the other needs, creating a cycle; databases detect it and roll back one transaction so the rest can proceed." },
   ]},
 
   { group: "Auth & Security", items: [
-    { topic: "Authentication", answer: "Verifying who the caller is." },
-    { topic: "Authorisation", answer: "Deciding what the caller is allowed to do." },
-    { topic: "JWT", answer: "JSON Web Token — compact, URL-safe signed token of header.payload.signature." },
-    { topic: "JWT parts", answer: "Header (alg), payload (claims), signature (HMAC/RSA)." },
-    { topic: "Session auth", answer: "Server stores session state; client holds opaque session id in cookie." },
-    { topic: "OAuth 2.0", answer: "Delegated authorisation framework issuing access tokens via flows (code, client-credentials…)." },
-    { topic: "OpenID Connect", answer: "Identity layer on top of OAuth 2.0 — adds ID token." },
-    { topic: "bcrypt", answer: "Adaptive password hashing with salt and configurable cost factor." },
-    { topic: "Salt vs Pepper", answer: "Salt is per-user random stored with hash; pepper is a secret added to all hashes." },
-    { topic: "CSRF", answer: "Cross-Site Request Forgery — attacker tricks browser into using the user's cookies for a side-effecting request." },
-    { topic: "XSS", answer: "Cross-Site Scripting — injecting malicious JS into pages viewed by others." },
-    { topic: "SQL injection", answer: "Smuggling SQL via unsanitised input — mitigate with parameterised queries." },
-    { topic: "SameSite cookies", answer: "`Strict`, `Lax`, `None` — controls cross-site cookie sending." },
-    { topic: "httpOnly cookies", answer: "Cookies the JS can't read, mitigating XSS token theft." },
-    { topic: "HTTPS", answer: "HTTP over TLS — encrypts, authenticates server, preserves integrity." },
-    { topic: "CSP", answer: "Content Security Policy header limits which scripts/styles may run." },
-    { topic: "CORS preflight", answer: "OPTIONS request the browser sends before non-simple cross-origin calls." },
-    { topic: "Rate limit vs Throttle", answer: "Rate limit caps per time window; throttle caps concurrent/per-tick calls." },
-    { topic: "Zero trust", answer: "Never trust location; always verify identity + device + context before granting access." },
+    { topic: "Authentication", answer: "Authentication is the process of verifying who the caller is, usually by checking something they know (password), have (token/device), or are (biometric) before granting access to anything." },
+    { topic: "Authorisation", answer: "Authorisation decides what an already-authenticated caller is allowed to do, by evaluating their roles, permissions, or policies against the requested resource or action." },
+    { topic: "JWT", answer: "JSON Web Token is a compact, URL-safe, signed token format with three base64url segments—header, payload, and signature—that lets services verify claims about a subject without server-side session storage." },
+    { topic: "JWT parts", answer: "A JWT is made of a header (declaring the signing algorithm), a payload (containing claims like `sub`, `iat`, `exp`), and a signature produced with either an HMAC secret or an asymmetric key pair." },
+    { topic: "Session auth", answer: "Session authentication stores the user's session state on the server (in memory, Redis, or a DB) and gives the browser an opaque session id via a cookie that identifies the stored session." },
+    { topic: "OAuth 2.0", answer: "OAuth 2.0 is a delegated authorisation framework defining flows—authorization code, PKCE, client credentials, device code—for apps to obtain access tokens that scope access to a resource owner's data." },
+    { topic: "OpenID Connect", answer: "OpenID Connect is a thin identity layer built on top of OAuth 2.0 that adds an ID token (a signed JWT) describing the authenticated user and standard claim names so apps can verify identity, not just access." },
+    { topic: "bcrypt", answer: "bcrypt is an adaptive password-hashing function that includes a per-user salt and a configurable cost factor, deliberately slowing down offline brute-force attacks as hardware gets faster." },
+    { topic: "Salt vs Pepper", answer: "A salt is a per-user random value stored alongside the hash to defeat rainbow tables, while a pepper is a secret applied to every hash by the server and kept outside the database." },
+    { topic: "CSRF", answer: "Cross-Site Request Forgery tricks a logged-in browser into performing an unwanted side-effecting request to another site using the user's cookies, mitigated with CSRF tokens and SameSite cookies." },
+    { topic: "XSS", answer: "Cross-Site Scripting is injecting malicious JavaScript into a page viewed by other users, giving the attacker access to cookies, session state, and the ability to perform actions as the victim." },
+    { topic: "SQL injection", answer: "SQL injection smuggles crafted input into database queries to change their meaning, letting attackers exfiltrate or corrupt data, and is prevented by always using parameterised queries or prepared statements." },
+    { topic: "SameSite cookies", answer: "The SameSite cookie attribute (`Strict`, `Lax`, or `None`) controls whether a cookie is sent on cross-site requests, which is now a primary defence against CSRF in modern browsers." },
+    { topic: "httpOnly cookies", answer: "A cookie marked `HttpOnly` cannot be read by JavaScript running in the browser, mitigating theft via XSS and making it the preferred way to store session tokens on the client side." },
+    { topic: "HTTPS", answer: "HTTPS is HTTP wrapped in TLS, which encrypts the connection, authenticates the server through a certificate chain, and guarantees integrity so that intermediaries cannot tamper with traffic." },
+    { topic: "CSP", answer: "Content Security Policy is an HTTP header that whitelists allowed sources for scripts, styles, images, frames, and more, letting you drastically shrink the XSS attack surface with a few directives." },
+    { topic: "CORS preflight", answer: "For non-simple cross-origin requests, the browser first sends an OPTIONS preflight asking the server which methods, headers, and credentials are allowed before dispatching the real request." },
+    { topic: "Rate limit vs Throttle", answer: "Rate limiting caps the number of calls allowed in a fixed time window (e.g. 100/min), while throttling slows down calls by delaying or queueing them rather than rejecting them outright." },
+    { topic: "Zero trust", answer: "Zero trust architecture assumes no network location is trustworthy on its own, requiring every request to be authenticated and authorised based on identity, device posture, and contextual risk." },
   ]},
 
   { group: "HTML / CSS / Tailwind", items: [
-    { topic: "Semantic HTML", answer: "Using meaningful tags (`<header>`, `<main>`, `<nav>`, `<article>`) for accessibility + SEO." },
-    { topic: "Box model", answer: "content + padding + border + margin." },
-    { topic: "Flexbox", answer: "1-D layout: `justify-content`, `align-items`, `flex-grow/shrink/basis`." },
-    { topic: "Grid", answer: "2-D layout with rows/columns via `grid-template-*` and areas." },
-    { topic: "Specificity", answer: "ID (100) > class/attribute/pseudo-class (10) > element/pseudo-element (1); inline + !important override." },
-    { topic: "Position values", answer: "static, relative, absolute, fixed, sticky." },
-    { topic: "`display`", answer: "Block, inline, inline-block, flex, grid, none, contents." },
-    { topic: "Responsive design", answer: "Fluid layouts via rem/%/min-max + media queries + mobile-first." },
-    { topic: "Media query", answer: "`@media (min-width: 640px) { … }` to apply styles conditionally." },
-    { topic: "CSS Variables", answer: "`--name: value; var(--name)` — cascade-aware custom props." },
-    { topic: "`em` vs `rem`", answer: "`em` is relative to parent font-size; `rem` to root font-size." },
-    { topic: "CSS Transitions", answer: "Animate changes between two property values over time." },
-    { topic: "CSS Animations", answer: "Keyframe-based with `@keyframes` and `animation:` shorthand." },
-    { topic: "`z-index`", answer: "Stacking order within a positioned stacking context." },
-    { topic: "Tailwind", answer: "Utility-first CSS framework generating classes from a config, JIT-compiled." },
-    { topic: "Tailwind @apply", answer: "Inline utility classes inside custom CSS via `@apply`." },
-    { topic: "Dark mode (Tailwind)", answer: "`darkMode: 'class'` + `dark:` variants, toggled by adding `dark` class to `<html>`." },
-    { topic: "A11y basics", answer: "Semantic HTML, keyboard navigation, focus rings, `aria-*`, colour contrast ≥ 4.5:1." },
+    { topic: "Semantic HTML", answer: "Semantic HTML uses meaning-carrying tags like `<header>`, `<main>`, `<nav>`, `<article>`, `<section>`, and `<footer>` so that screen readers, search engines, and future developers understand the structure immediately." },
+    { topic: "Box model", answer: "Every CSS box is laid out as content, padding, border, and margin around it; `box-sizing: border-box` makes padding and border count inside the declared width to keep layouts predictable." },
+    { topic: "Flexbox", answer: "Flexbox is a 1-dimensional layout system where children flow along a main axis; properties like `justify-content`, `align-items`, and `flex-grow` distribute space and align items cleanly without floats." },
+    { topic: "Grid", answer: "CSS Grid is a 2-dimensional layout system with explicit rows and columns defined via `grid-template-rows/columns` and named areas, ideal for page-level layouts and complex overlapping designs." },
+    { topic: "Specificity", answer: "CSS specificity is calculated as a 4-tuple (inline, ids, classes/attrs/pseudo-classes, elements/pseudo-elements); when two rules match the same element, the higher specificity wins, with `!important` overriding both." },
+    { topic: "Position values", answer: "The `position` property can be static (default), relative (offsets from itself), absolute (offsets from the nearest positioned ancestor), fixed (offsets from the viewport), or sticky (relative then fixed on scroll)." },
+    { topic: "display", answer: "`display` controls a box's layout role, with values like block, inline, inline-block, flex, grid, table, contents (which disappears the box but keeps children), and none (removes it from layout)." },
+    { topic: "Responsive design", answer: "Responsive design means the same layout adapts fluidly to viewport size using relative units, min/max constraints, media queries, and mobile-first CSS that progressively enhances for larger screens." },
+    { topic: "Media query", answer: "A media query like `@media (min-width: 640px) { … }` applies CSS only when the viewport matches the condition, supporting width, orientation, hover capability, pointer type, and user preferences such as dark mode." },
+    { topic: "CSS Variables", answer: "CSS custom properties declared as `--name: value` and consumed with `var(--name)` are cascade-aware runtime variables that make theming, dark mode toggles, and design tokens trivial." },
+    { topic: "em vs rem", answer: "`em` is relative to the font-size of the nearest styled ancestor and can compound in nested rules, while `rem` is relative to the root (`html`) font-size and stays predictable across the tree." },
+    { topic: "CSS Transitions", answer: "`transition: property duration easing delay` smoothly animates specific properties between two states triggered by a class change, hover, focus, or JavaScript, with no keyframes required." },
+    { topic: "CSS Animations", answer: "CSS Animations use `@keyframes` to define multi-step property changes and are applied via the `animation` shorthand, supporting duration, easing, iteration count, direction, and play state." },
+    { topic: "z-index", answer: "`z-index` controls stacking order within the same stacking context; it only affects positioned elements and can misbehave when new stacking contexts are introduced by transforms, filters, or opacity." },
+    { topic: "Tailwind", answer: "Tailwind CSS is a utility-first framework that generates small, composable class names from a design-token config, using JIT compilation to ship only the classes actually used in your templates." },
+    { topic: "Tailwind @apply", answer: "The `@apply` directive lets you compose Tailwind utility classes inside your own CSS selectors, which is helpful for keeping markup readable when a component uses a long utility string repeatedly." },
+    { topic: "Dark mode (Tailwind)", answer: "With `darkMode: 'class'`, Tailwind's `dark:` variants activate whenever an ancestor has the `dark` class, which you toggle on `<html>` and persist via localStorage to respect user preference." },
+    { topic: "A11y basics", answer: "Accessibility basics include semantic HTML, full keyboard navigation, visible focus rings, meaningful `aria-*` attributes only when native semantics fall short, and at least 4.5:1 colour contrast for text." },
   ]},
 
   { group: "Networking / Browser", items: [
-    { topic: "HTTP/1.1 vs HTTP/2 vs HTTP/3", answer: "1.1 text/serial per connection; 2 binary + multiplexed over TCP; 3 over QUIC/UDP." },
-    { topic: "DNS", answer: "Hierarchical name → IP system; recursive & authoritative resolvers with TTL caching." },
-    { topic: "TLS handshake", answer: "ClientHello → ServerHello + cert → key exchange → finished; derives session keys." },
-    { topic: "CDN", answer: "Edge-cached servers that deliver static (and some dynamic) content close to users." },
-    { topic: "Caching headers", answer: "`Cache-Control`, `ETag`, `If-None-Match`, `Last-Modified`, `Vary`." },
-    { topic: "Cookies", answer: "Small key/value sent with every same-origin request; configurable with Secure, HttpOnly, SameSite, Max-Age." },
-    { topic: "LocalStorage vs SessionStorage", answer: "Both are per-origin KV; local persists; session clears on tab close." },
-    { topic: "Service Worker", answer: "Background script that proxies network, enables offline/caching and push." },
-    { topic: "Same-origin policy", answer: "Scripts can only access responses from the same origin unless CORS allows otherwise." },
-    { topic: "Event bubbling vs capturing", answer: "Capture flows down to target; bubble flows back up." },
-    { topic: "Debounced input", answer: "Fire the handler N ms after the user stops typing." },
+    { topic: "HTTP/1.1 vs HTTP/2 vs HTTP/3", answer: "HTTP/1.1 uses plain-text, serial request/response per connection, HTTP/2 introduces a binary framing with multiplexing over a single TCP connection, and HTTP/3 moves the whole thing onto QUIC over UDP for faster handshakes and resilience to packet loss." },
+    { topic: "DNS", answer: "The Domain Name System is a hierarchical lookup service that translates human-friendly names into IP addresses using a chain of recursive resolvers, authoritative servers, and TTL-based caching to spread the load." },
+    { topic: "TLS handshake", answer: "A TLS handshake begins with ClientHello/ServerHello negotiating cipher suite and version, exchanges the server certificate and key material (via ECDHE), derives shared session keys, and ends with Finished messages that encrypt everything after." },
+    { topic: "CDN", answer: "A Content Delivery Network is a geographically distributed set of edge servers that cache static assets (and some dynamic responses) close to users, lowering latency and offloading traffic from the origin." },
+    { topic: "Caching headers", answer: "The main HTTP caching headers are `Cache-Control` (freshness directives), `ETag` and `If-None-Match` (validation), `Last-Modified` and `If-Modified-Since` (time-based validation), and `Vary` (which request headers influence caching)." },
+    { topic: "Cookies", answer: "Cookies are small key/value pairs set by the server and sent back with every same-origin request, configurable with `Secure`, `HttpOnly`, `SameSite`, `Domain`, `Path`, `Max-Age`, and `Expires` to control scope and safety." },
+    { topic: "LocalStorage vs SessionStorage", answer: "`localStorage` and `sessionStorage` are per-origin key-value stores with synchronous APIs; local persists until explicitly cleared, while session is scoped to the current tab and erased when it closes." },
+    { topic: "Service Worker", answer: "A service worker is a background script running separately from the page that proxies network requests, enables offline support, powers push notifications, and handles background sync for installable Progressive Web Apps." },
+    { topic: "Same-origin policy", answer: "The same-origin policy is a browser rule that prevents JavaScript from reading responses from a different protocol/host/port combination unless the target opts in via CORS, forming the bedrock of web security." },
+    { topic: "Event bubbling vs capturing", answer: "DOM events travel in three phases: capture flows downward from `window` to the target, the event fires at the target, and bubbling flows back up; handlers default to the bubble phase unless `capture: true` is set." },
+    { topic: "Debounced input", answer: "A debounced input handler schedules the real work after a quiet period following the user's last keystroke, batching rapid changes into a single update so you don't fire a request on every character typed." },
   ]},
 
   { group: "Git & Tooling", items: [
-    { topic: "Git", answer: "Distributed version control tracking content snapshots via SHA-1 hashes." },
-    { topic: "`git clone`", answer: "Copy a remote repo locally and set `origin` as its default remote." },
-    { topic: "`git pull`", answer: "`fetch` + `merge` (or rebase) remote tracking branch into current branch." },
-    { topic: "`git fetch`", answer: "Download remote refs/objects without modifying your working tree." },
-    { topic: "`git merge` vs `git rebase`", answer: "Merge preserves history with a merge commit; rebase rewrites commits onto a new base." },
-    { topic: "Fast-forward", answer: "Merge that just moves the branch pointer because there are no divergent commits." },
-    { topic: "`git stash`", answer: "Temporarily shelves dirty working-tree changes; `apply`/`pop` restores them." },
-    { topic: "`git reset`", answer: "Move HEAD/branch and optionally index/working tree.", types: "soft, mixed, hard" },
-    { topic: "`git revert`", answer: "Create a new commit that undoes a previous one (safe on shared history)." },
-    { topic: "Detached HEAD", answer: "HEAD points at a commit instead of a branch — commits made here are orphaned if not tagged/branched." },
-    { topic: ".gitignore", answer: "File listing patterns Git should not track." },
-    { topic: "Pull request", answer: "GitHub/GitLab/Bitbucket workflow to propose, review, and merge changes." },
-    { topic: "CI/CD", answer: "Continuous Integration (build+test every push) + Continuous Delivery/Deployment (auto-release)." },
-    { topic: "Vite", answer: "Fast dev server + bundler using ESM in dev and Rollup for prod builds." },
-    { topic: "Webpack", answer: "Module bundler with loaders, plugins, code splitting, tree-shaking." },
-    { topic: "ESLint", answer: "Pluggable linter for JS/TS catching stylistic + correctness issues." },
-    { topic: "Prettier", answer: "Opinionated code formatter — rewrites code to a canonical style." },
-    { topic: "Husky", answer: "Git hook manager to run scripts on pre-commit, commit-msg, pre-push." },
+    { topic: "Git", answer: "Git is a distributed version-control system that models history as a directed acyclic graph of immutable content-addressed snapshots, enabling fast branching, merging, and offline work." },
+    { topic: "git clone", answer: "`git clone <url>` copies a remote repository to your machine, fetches all commits and branches, sets the remote alias `origin`, and checks out the default branch into the working directory." },
+    { topic: "git pull", answer: "`git pull` runs `git fetch` to download remote updates and then merges (or rebases, depending on configuration) the tracked upstream branch into your current branch." },
+    { topic: "git fetch", answer: "`git fetch` downloads commits, branches, and tags from a remote and updates your remote-tracking refs, without changing your working tree or current branch, so you can inspect updates first." },
+    { topic: "git merge vs git rebase", answer: "`git merge` preserves branch topology by creating a merge commit that joins two histories, while `git rebase` rewrites your commits onto a new base to produce a linear history at the cost of changing commit SHAs." },
+    { topic: "Fast-forward", answer: "A fast-forward merge happens when the branch being merged has no commits the target lacks; Git simply advances the branch pointer forward without creating a new merge commit." },
+    { topic: "git stash", answer: "`git stash` temporarily shelves uncommitted changes into a stack so you can switch branches cleanly, later restoring them with `stash pop` or `stash apply` without losing work." },
+    { topic: "git reset", answer: "`git reset` moves the branch pointer (and optionally the index or working tree) to a different commit; the mode decides how far the reset cascades.", types: "--soft, --mixed, --hard" },
+    { topic: "git revert", answer: "`git revert <commit>` creates a new commit that undoes the changes of a previous commit without rewriting history, making it the safe way to back out changes on shared branches." },
+    { topic: "Detached HEAD", answer: "Detached HEAD is the state where `HEAD` points directly at a commit rather than a branch; commits made in this mode become orphaned unless you create a branch or tag pointing to them." },
+    { topic: ".gitignore", answer: "`.gitignore` is a project-root file listing path patterns Git should refuse to track; it only affects untracked files, so already-committed paths need `git rm --cached` to actually stop being tracked." },
+    { topic: "Pull request", answer: "A pull request is the GitHub/GitLab/Bitbucket workflow where a contributor proposes changes from one branch to another, enabling code review, CI checks, discussion, and controlled merging into the main branch." },
+    { topic: "CI/CD", answer: "Continuous Integration builds and tests every push automatically, while Continuous Delivery or Deployment automates the path from a successful build to a release-ready artifact or production deployment." },
+    { topic: "Vite", answer: "Vite is a next-generation build tool that serves native ES modules during development for near-instant HMR and uses Rollup for optimised production bundles, with first-class support for React, Vue, Svelte, and more." },
+    { topic: "Webpack", answer: "Webpack is a mature module bundler that treats everything as a module, uses loaders and plugins to transform assets, and supports advanced features like code splitting, tree shaking, lazy loading, and module federation." },
+    { topic: "ESLint", answer: "ESLint is a pluggable linter for JavaScript and TypeScript that analyses source code statically to enforce stylistic rules and catch common bugs, with hundreds of configurable rules and shareable configs." },
+    { topic: "Prettier", answer: "Prettier is an opinionated code formatter that rewrites your source into a canonical style, eliminating bikeshedding about spaces, line length, and quote style by removing most formatting decisions from humans." },
+    { topic: "Husky", answer: "Husky is a Git hook manager that makes it easy to run scripts on hooks like `pre-commit`, `commit-msg`, and `pre-push`, often paired with `lint-staged` to lint and format only the files being committed." },
   ]},
 
   { group: "Testing", items: [
-    { topic: "Unit test", answer: "Tests a single function/component in isolation (mocks externals)." },
-    { topic: "Integration test", answer: "Tests modules working together (e.g. controller + DB)." },
-    { topic: "E2E test", answer: "Drives a running app like a user does (Cypress, Playwright)." },
-    { topic: "Test pyramid", answer: "Lots of unit tests at the base, fewer integration, fewest E2E at the top." },
-    { topic: "Mock vs Stub vs Spy", answer: "Mock verifies interactions, stub returns canned data, spy records calls while delegating." },
-    { topic: "Jest", answer: "Zero-config JS test runner with built-in mocking and snapshot testing." },
-    { topic: "React Testing Library", answer: "User-centric tests — queries by role/text, discourages testing implementation details." },
-    { topic: "Code coverage", answer: "% of source executed by tests — line, branch, function, statement." },
-    { topic: "TDD", answer: "Red → Green → Refactor — write failing test, make it pass, clean up." },
+    { topic: "Unit test", answer: "A unit test exercises a single function or component in isolation by mocking its external dependencies, giving fast feedback on small units of logic without the complexity of the full system." },
+    { topic: "Integration test", answer: "An integration test verifies that several modules cooperate correctly, such as a controller talking to a real (or in-memory) database, catching contract bugs that pure unit tests cannot." },
+    { topic: "E2E test", answer: "An end-to-end test drives the whole running application the way a user would, using tools like Cypress or Playwright to click, type, and assert from the browser down through the real backend." },
+    { topic: "Test pyramid", answer: "The test pyramid is a heuristic that says you should have many fast unit tests at the base, a smaller layer of integration tests in the middle, and very few slow end-to-end tests at the top." },
+    { topic: "Mock vs Stub vs Spy", answer: "A stub returns canned data for a call, a spy records how a real implementation was called while still delegating, and a mock pre-defines expectations and verifies the interactions happened as planned." },
+    { topic: "Jest", answer: "Jest is a zero-config JavaScript test runner from Meta with built-in matchers, parallel execution, snapshot testing, module mocking, code coverage, and great TypeScript support out of the box." },
+    { topic: "React Testing Library", answer: "React Testing Library encourages user-centric tests by querying elements by role and accessible text rather than internal implementation details, which produces resilient tests that mirror how real users interact with the UI." },
+    { topic: "Code coverage", answer: "Code coverage measures what fraction of your source was executed by tests across lines, branches, functions, and statements; high coverage is useful but doesn't by itself guarantee tests are meaningful." },
+    { topic: "TDD", answer: "Test-Driven Development follows a short red-green-refactor cycle: write a failing test that describes a tiny behaviour, make it pass with the minimum code, then refactor safely under the test's protection." },
   ]},
 
   { group: "DevOps / Deployment", items: [
-    { topic: "Docker", answer: "Containerisation platform packaging app + deps into reproducible images." },
-    { topic: "Docker image vs container", answer: "Image is the blueprint; container is a running instance of it." },
-    { topic: "Dockerfile", answer: "Script that builds an image layer-by-layer using FROM, COPY, RUN, CMD, ENV, EXPOSE." },
-    { topic: "`docker-compose`", answer: "YAML to run multi-container apps on one host." },
-    { topic: "Kubernetes", answer: "Container orchestrator managing pods/services/deployments across nodes." },
-    { topic: "12-factor app", answer: "Methodology for cloud-native apps: codebase, deps, config, backing services, build/run, processes, port binding, concurrency, disposability, dev/prod parity, logs, admin." },
-    { topic: "Environment variables", answer: "Config supplied by the OS/runtime, outside the artifact." },
-    { topic: "Blue-green deploy", answer: "Keep two identical envs, cut over traffic from old (blue) to new (green)." },
-    { topic: "Canary release", answer: "Ship new version to a small % of traffic first." },
-    { topic: "CDN cache invalidation", answer: "Tell edge nodes to drop cached copies after a deploy (versioned URLs help)." },
+    { topic: "Docker", answer: "Docker is a containerisation platform that packages your application with its dependencies into a reproducible image, which runs identically on any host with a container runtime—laptop, CI, or cloud." },
+    { topic: "Docker image vs container", answer: "A Docker image is an immutable, layered blueprint built from a Dockerfile, while a container is a running instance of that image with its own filesystem overlay, process tree, and network namespace." },
+    { topic: "Dockerfile", answer: "A Dockerfile is a text script that builds an image layer by layer using instructions such as FROM, COPY, RUN, ENV, EXPOSE, and CMD, with each instruction producing a cacheable layer." },
+    { topic: "docker-compose", answer: "`docker compose` orchestrates multi-container applications on a single host via a YAML file describing services, networks, and volumes, which is perfect for local dev stacks mixing app, database, and cache." },
+    { topic: "Kubernetes", answer: "Kubernetes is a container orchestrator that manages pods, services, deployments, config maps, secrets, and autoscaling across a fleet of nodes, abstracting away raw servers behind declarative manifests." },
+    { topic: "12-factor app", answer: "The 12-Factor methodology is a set of guidelines for building cloud-native apps, covering codebase, dependencies, config, backing services, build/release/run, stateless processes, port binding, concurrency, disposability, dev/prod parity, logs, and admin tasks." },
+    { topic: "Environment variables", answer: "Environment variables are configuration supplied to a process by the OS or runtime instead of being baked into the artifact, letting the same binary run in different environments by changing only its env." },
+    { topic: "Blue-green deploy", answer: "Blue-green deployment keeps two identical production environments, deploys the new version to the idle one (green), smoke-tests it, and then cuts over traffic from blue to green with an instant switch-back option." },
+    { topic: "Canary release", answer: "A canary release ships the new version to a small percentage of traffic or users first, watches health metrics, and gradually ramps up when the canary looks healthy, catching regressions with limited blast radius." },
+    { topic: "CDN cache invalidation", answer: "Because CDNs aggressively cache responses, deployments usually either issue explicit purge requests to the CDN or use fingerprinted (hashed) URLs so that new content has a new URL and the old entry simply stops being requested." },
   ]},
 
   { group: "System Design basics", items: [
-    { topic: "Load balancer", answer: "Distributes traffic across backends with health checks (L4/L7)." },
-    { topic: "Reverse proxy", answer: "Fronts backend servers to add TLS, caching, auth, routing (Nginx/HAProxy)." },
-    { topic: "Database replication", answer: "Keeps copies of data across nodes for HA / read scaling." },
-    { topic: "Database sharding", answer: "Partition data by key across multiple DBs for horizontal scale." },
-    { topic: "Caching layers", answer: "Browser → CDN → reverse proxy → application cache → DB cache." },
-    { topic: "Message queue", answer: "Decouples producers/consumers (RabbitMQ, SQS); async, back-pressure-friendly." },
-    { topic: "Pub/Sub", answer: "Topic-based message fan-out to many subscribers (Kafka, Redis Streams)." },
-    { topic: "Eventual consistency", answer: "Updates propagate asynchronously — reads may see stale data briefly." },
-    { topic: "Rate limiting strategies", answer: "Token bucket, leaky bucket, fixed/sliding window." },
-    { topic: "CDN", answer: "Edge network reducing latency + offloading origin for static assets." },
+    { topic: "Load balancer", answer: "A load balancer distributes incoming traffic across a pool of backends using algorithms like round-robin, least connections, or consistent hashing, optionally performing health checks to pull unhealthy nodes out of rotation." },
+    { topic: "Reverse proxy", answer: "A reverse proxy such as Nginx or HAProxy sits in front of your backends to terminate TLS, apply caching, authenticate, rewrite URLs, buffer slow clients, and route based on method/host/path/header rules." },
+    { topic: "Database replication", answer: "Replication keeps copies of your database across multiple nodes so you can survive failures and scale reads; strategies include single-leader, multi-leader, and leaderless with different consistency trade-offs." },
+    { topic: "Database sharding", answer: "Sharding horizontally partitions data across multiple database instances based on a shard key such as user id or hash, letting the system scale beyond what a single node can store or serve." },
+    { topic: "Caching layers", answer: "A typical request traverses several caches: browser cache, CDN edge cache, reverse-proxy cache, in-memory application cache, and finally the database's own buffer pool—each layer closer to the user yields bigger speed wins." },
+    { topic: "Message queue", answer: "A message queue (RabbitMQ, SQS, ActiveMQ) decouples producers from consumers so slow consumers can't slow down producers, supports retries and dead-lettering, and smooths bursty traffic through back-pressure." },
+    { topic: "Pub/Sub", answer: "Publish-subscribe systems like Kafka, Redis Streams, or Google Pub/Sub fan out messages from publishers to multiple subscribers via topics, enabling event-driven architectures, change capture, and real-time analytics." },
+    { topic: "Eventual consistency", answer: "Eventual consistency relaxes the read-your-writes guarantee: updates propagate asynchronously through replicas, so reads may briefly see stale data but every replica converges to the same state over time." },
+    { topic: "Rate limiting strategies", answer: "Common rate-limit algorithms include token bucket (burst-friendly), leaky bucket (smooth rate), fixed-window counters (simple but spiky at boundaries), and sliding-window counters for a smoother distribution over time." },
+    { topic: "CDN", answer: "A Content Delivery Network is an edge-caching layer across global points of presence that reduces latency for static (and some dynamic) content, taking load off the origin and improving availability." },
   ]},
 
   { group: "Data structures & algorithms", items: [
-    { topic: "Array vs Linked List", answer: "Array = O(1) index, O(n) insert; linked list = O(n) index, O(1) insert at head." },
-    { topic: "Stack", answer: "LIFO — push/pop at the top." },
-    { topic: "Queue", answer: "FIFO — enqueue tail, dequeue head." },
-    { topic: "Hash map", answer: "Average O(1) key→value via hash function + collision strategy." },
-    { topic: "Binary search tree", answer: "Each node left < root < right; O(log n) search when balanced." },
-    { topic: "Heap", answer: "Complete binary tree where each parent ≤ (min-heap) or ≥ (max-heap) children; priority queue." },
-    { topic: "Graph", answer: "Nodes + edges; directed/undirected, weighted/unweighted." },
-    { topic: "BFS vs DFS", answer: "BFS uses a queue and explores level by level; DFS uses recursion/stack and dives deep." },
-    { topic: "Dynamic programming", answer: "Solve overlapping sub-problems by memoising / tabulating." },
-    { topic: "Big-O", answer: "Upper-bound of running time/space as input grows: O(1), O(log n), O(n), O(n log n), O(n²), O(2ⁿ)." },
-    { topic: "Sorting comparison", answer: "QuickSort avg O(n log n); MergeSort stable O(n log n); HeapSort in-place O(n log n); BubbleSort O(n²)." },
+    { topic: "Array vs Linked List", answer: "Arrays give O(1) random access by index but O(n) insertion in the middle due to shifting, while linked lists offer O(1) insertion given a node reference but require O(n) traversal to find an index." },
+    { topic: "Stack", answer: "A stack is a Last-In-First-Out collection supporting push (add to top) and pop (remove from top), useful for reversing sequences, function-call frames, expression evaluation, and undo buffers." },
+    { topic: "Queue", answer: "A queue is a First-In-First-Out collection supporting enqueue at the tail and dequeue from the head, used for task scheduling, BFS traversal, buffering producer-consumer pipelines, and event loops." },
+    { topic: "Hash map", answer: "A hash map stores key-value pairs by hashing the key to an array slot, achieving average O(1) lookup, insertion, and deletion when the hash function is good and the load factor is bounded." },
+    { topic: "Binary search tree", answer: "A binary search tree maintains the invariant that every left subtree is smaller and every right subtree is larger than the node, giving O(log n) search when balanced and O(n) when degenerate." },
+    { topic: "Heap", answer: "A heap is a complete binary tree where every parent respects the heap property (min-heap or max-heap), stored as an array; it powers priority queues, dijkstra's algorithm, and heap sort in O(n log n)." },
+    { topic: "Graph", answer: "A graph is a collection of nodes (vertices) connected by edges that may be directed or undirected, weighted or unweighted, and it models networks, dependencies, routes, and relationships across many problems." },
+    { topic: "BFS vs DFS", answer: "Breadth-First Search uses a queue to explore nodes level by level and finds the shortest path in unweighted graphs, while Depth-First Search uses recursion or a stack to dive deep, useful for topological sort and cycle detection." },
+    { topic: "Dynamic programming", answer: "Dynamic programming solves problems with overlapping subproblems and optimal substructure by storing (memoising) solutions to subproblems so they are computed only once, dramatically reducing the exponential naive runtime." },
+    { topic: "Big-O", answer: "Big-O notation describes the asymptotic upper bound on an algorithm's running time or space as input size grows; common classes are O(1), O(log n), O(n), O(n log n), O(n²), O(2ⁿ), and O(n!)." },
+    { topic: "Sorting comparison", answer: "QuickSort averages O(n log n) but worsens to O(n²), MergeSort is a stable O(n log n) that uses O(n) extra memory, HeapSort is O(n log n) in-place but not stable, and BubbleSort is O(n²) and mostly educational." },
   ]},
 
   { group: "Misc concepts", items: [
-    { topic: "SOLID", answer: "Single-resp, Open-closed, Liskov, Interface-segregation, Dependency-inversion." },
-    { topic: "DRY / KISS / YAGNI", answer: "Don't Repeat Yourself; Keep It Simple; You Aren't Gonna Need It." },
-    { topic: "Design patterns", answer: "Reusable solutions.", types: "Creational (Factory, Singleton), Structural (Adapter, Decorator), Behavioural (Observer, Strategy)" },
-    { topic: "Agile", answer: "Iterative delivery with short cycles, feedback, adaptive planning." },
-    { topic: "Scrum", answer: "Agile framework with sprints, standups, reviews, retros, product + sprint backlogs." },
-    { topic: "Kanban", answer: "Flow-based system with WIP limits visualised on a board." },
-    { topic: "REST vs GraphQL", answer: "REST = many resource URLs; GraphQL = single endpoint with flexible queries." },
-    { topic: "Monolith vs Microservices", answer: "Single deployable unit vs many small services with their own data + release cycle." },
-    { topic: "Serverless", answer: "Functions (Lambda) triggered by events, scaled by the provider, billed per use." },
-    { topic: "Observability", answer: "Logs + metrics + traces that let you reason about production behaviour." },
+    { topic: "SOLID", answer: "SOLID is an acronym for five object-oriented design principles: Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion, which together encourage flexible, maintainable code." },
+    { topic: "DRY / KISS / YAGNI", answer: "DRY says Don't Repeat Yourself and share single sources of truth, KISS says Keep It Simple, Stupid by avoiding unnecessary complexity, and YAGNI says You Aren't Gonna Need It so don't build for speculative requirements." },
+    { topic: "Design patterns", answer: "Design patterns are reusable templates for solving common software problems, categorised into creational, structural, and behavioural groups.", types: "Creational (Factory, Singleton, Builder), Structural (Adapter, Decorator, Facade), Behavioural (Observer, Strategy, Command)" },
+    { topic: "Agile", answer: "Agile is a family of iterative delivery methodologies emphasising short cycles, continuous customer feedback, working software over documentation, and the freedom to adapt plans as understanding grows." },
+    { topic: "Scrum", answer: "Scrum is the most common Agile framework featuring fixed-length sprints, daily standups, sprint planning, review and retrospective ceremonies, and clear roles like Product Owner, Scrum Master, and development team." },
+    { topic: "Kanban", answer: "Kanban is a flow-based system that visualises work on a board with columns and limits work-in-progress per column, helping teams identify bottlenecks and deliver continuously rather than in fixed iterations." },
+    { topic: "REST vs GraphQL", answer: "REST exposes many resource URLs each returning a fixed shape and relies on HTTP semantics, while GraphQL offers a single typed endpoint where clients pick exactly which fields to retrieve across multiple entities." },
+    { topic: "Monolith vs Microservices", answer: "A monolith is a single deployable unit that is simple to develop and operate, while microservices split functionality into small, independently deployable services with their own data, enabling scaling at the cost of operational complexity." },
+    { topic: "Serverless", answer: "Serverless means running small functions (AWS Lambda, Cloud Functions) in response to events; the provider handles capacity, scaling, and patching, and you pay only for the compute time actually used." },
+    { topic: "Observability", answer: "Observability is the ability to understand a system's internal state from its external signals—logs, metrics, and distributed traces—so you can diagnose production issues without shipping new code first." },
   ]},
 ];
 
