@@ -71,7 +71,7 @@ export default function Dashboard() {
       <div className="card">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h2 className="font-semibold text-slate-900 dark:text-slate-100">Low stock items</h2>
-          <Link to="/products" className="text-sm text-brand-600 hover:underline">
+          <Link to="/app/products" className="text-sm text-brand-600 hover:underline">
             View all products →
           </Link>
         </div>
@@ -95,7 +95,7 @@ export default function Dashboard() {
                 <tr key={item.id} className="table-row">
                   <td className="px-5 py-3 text-slate-900 dark:text-slate-100">
                     <Link
-                      to={`/products/${item.id}`}
+                      to={`/app/products/${item.id}`}
                       className="hover:text-brand-600"
                     >
                       {item.name}

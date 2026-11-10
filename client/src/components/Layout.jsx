@@ -24,22 +24,22 @@ const NAV_SECTIONS = [
   {
     title: 'Overview',
     links: [
-      { to: '/', label: 'Dashboard', end: true, Icon: IconDashboard },
-      { to: '/reports', label: 'Reports', Icon: IconReports },
-      { to: '/movements', label: 'Stock history', Icon: IconHistory },
+      { to: '/app', label: 'Dashboard', end: true, Icon: IconDashboard },
+      { to: '/app/reports', label: 'Reports', Icon: IconReports },
+      { to: '/app/movements', label: 'Stock history', Icon: IconHistory },
     ],
   },
   {
     title: 'Catalog',
     links: [
-      { to: '/products', label: 'Products', Icon: IconBox },
-      { to: '/categories', label: 'Categories', Icon: IconTag },
-      { to: '/suppliers', label: 'Suppliers', Icon: IconTruck },
+      { to: '/app/products', label: 'Products', Icon: IconBox },
+      { to: '/app/categories', label: 'Categories', Icon: IconTag },
+      { to: '/app/suppliers', label: 'Suppliers', Icon: IconTruck },
     ],
   },
   {
     title: 'Admin',
-    links: [{ to: '/settings', label: 'Settings', Icon: IconSettings }],
+    links: [{ to: '/app/settings', label: 'Settings', Icon: IconSettings }],
   },
 ];
 

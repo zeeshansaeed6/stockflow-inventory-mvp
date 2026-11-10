@@ -11,14 +11,14 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/app" replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     try {
       await login(email, password);
-      navigate('/', { replace: true });
+      navigate('/app', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }

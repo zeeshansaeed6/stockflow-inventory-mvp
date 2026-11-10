@@ -13,6 +13,7 @@ const empty = {
   name: '',
   sku: '',
   description: '',
+  imageUrl: '',
   quantityOnHand: 0,
   costPrice: '',
   sellingPrice: '',
@@ -49,6 +50,7 @@ export default function ProductForm() {
           name: p.name || '',
           sku: p.sku || '',
           description: p.description || '',
+          imageUrl: p.imageUrl || '',
           quantityOnHand: p.quantityOnHand ?? 0,
           costPrice: p.costPrice ?? '',
           sellingPrice: p.sellingPrice ?? '',
@@ -71,6 +73,7 @@ export default function ProductForm() {
       name: form.name.trim(),
       sku: form.sku.trim(),
       description: form.description,
+      imageUrl: form.imageUrl.trim(),
       quantityOnHand: Number(form.quantityOnHand) || 0,
       costPrice: form.costPrice === '' ? null : Number(form.costPrice),
       sellingPrice: form.sellingPrice === '' ? null : Number(form.sellingPrice),
@@ -110,7 +113,7 @@ export default function ProductForm() {
         <h1 className="text-2xl font-bold text-slate-900">
           {isEdit ? 'Edit product' : 'New product'}
         </h1>
-        <Link to="/products" className="text-sm text-brand-600 hover:underline">
+        <Link to="/app/products" className="text-sm text-brand-600 hover:underline">
           ← Back to products
         </Link>
       </div>
@@ -140,6 +143,30 @@ export default function ProductForm() {
               value={form.sku}
               onChange={update('sku')}
               required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
+          <div>
+            <label className="label">Image URL</label>
+            <input
+              className="input"
+              placeholder="https://… (leave blank for auto image)"
+              value={form.imageUrl}
+              onChange={update('imageUrl')}
+            />
+            <p className="text-xs muted mt-1">
+              Any public image URL. Leave blank to auto-generate from the SKU.
+            </p>
+          </div>
+          <div className="w-full md:w-40">
+            <label className="label">Preview</label>
+            <img
+              src={form.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(form.sku || 'preview')}/320/240`}
+              alt="Preview"
+              className="w-full h-24 object-cover rounded-md border border-slate-200 dark:border-slate-800"
+              onError={(e) => { e.currentTarget.src = `https://picsum.photos/seed/${encodeURIComponent(form.sku || 'preview')}/320/240`; }}
             />
           </div>
         </div>
@@ -239,7 +266,7 @@ export default function ProductForm() {
           <button type="submit" className="btn-primary" disabled={saving}>
             {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create product'}
           </button>
-          <Link to="/products" className="btn-secondary">
+          <Link to="/app/products" className="btn-secondary">
             Cancel
           </Link>
         </div>

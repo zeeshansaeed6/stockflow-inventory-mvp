@@ -20,6 +20,55 @@ const StockMovement = require('../models/StockMovement');
 // A single plaintext password across every demo account — demo only.
 const DEMO_PASSWORD = 'demo1234';
 
+// Curated Unsplash photo IDs per SKU. Using Source URLs so the
+// client can lazy-load the right size; cards request 400x300 crops.
+const PRODUCT_IMAGES = {
+  // Blue Spark Electronics
+  'BS-CASE-15C': 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&h=300&fit=crop',
+  'BS-CASE-15L': 'https://images.unsplash.com/photo-1512499617640-c2f999098c01?w=400&h=300&fit=crop',
+  'BS-CHG-65C':  'https://images.unsplash.com/photo-1615526675159-e248c3021d3f?w=400&h=300&fit=crop',
+  'BS-CBL-1M':   'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400&h=300&fit=crop',
+  'BS-CBL-LT2':  'https://images.unsplash.com/photo-1588702547923-7093a6c3ba33?w=400&h=300&fit=crop',
+  'BS-AUD-EBP':  'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=400&h=300&fit=crop',
+  'BS-AUD-OEH':  'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=300&fit=crop',
+  'BS-LPT-STD':  'https://images.unsplash.com/photo-1587613864521-9ef8dfe617cc?w=400&h=300&fit=crop',
+  'BS-LPT-HUB':  'https://images.unsplash.com/photo-1625948515291-69613efd103f?w=400&h=300&fit=crop',
+  'BS-ACC-GSP':  'https://images.unsplash.com/photo-1512054502232-10a0a035d672?w=400&h=300&fit=crop',
+  // Rooted Coffee
+  'RC-BEAN-ETH': 'https://images.unsplash.com/photo-1587080413959-06b859fb107d?w=400&h=300&fit=crop',
+  'RC-BEAN-COL': 'https://images.unsplash.com/photo-1559525839-d9acfd50ae1b?w=400&h=300&fit=crop',
+  'RC-BEAN-ESP': 'https://images.unsplash.com/photo-1518057111178-44a106bad636?w=400&h=300&fit=crop',
+  'RC-BEAN-DEC': 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400&h=300&fit=crop',
+  'RC-EQP-GRND': 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=300&fit=crop',
+  'RC-EQP-V60':  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop',
+  'RC-ACC-FLT':  'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&h=300&fit=crop',
+  'RC-ACC-TMB':  'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&h=300&fit=crop',
+  // Bloom & Vine
+  'BV-FLW-RSE':  'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&h=300&fit=crop',
+  'BV-FLW-HYD':  'https://images.unsplash.com/photo-1520763185298-1b434c919102?w=400&h=300&fit=crop',
+  'BV-FLW-LAV':  'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=400&h=300&fit=crop',
+  'BV-POT-VASM': 'https://images.unsplash.com/photo-1602928321679-560bb453f190?w=400&h=300&fit=crop',
+  'BV-POT-SOIL': 'https://images.unsplash.com/photo-1416664806563-bb6be3be8ef5?w=400&h=300&fit=crop',
+  'BV-FLW-SUC':  'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=400&h=300&fit=crop',
+  'BV-SUP-RBN':  'https://images.unsplash.com/photo-1512909006721-3d6018887383?w=400&h=300&fit=crop',
+  // Trailhead
+  'TH-PCK-40L':  'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop',
+  'TH-PCK-65L':  'https://images.unsplash.com/photo-1544816155-12df9643f363?w=400&h=300&fit=crop',
+  'TH-CMP-POLE': 'https://images.unsplash.com/photo-1600697277406-8e5a5fcf98de?w=400&h=300&fit=crop',
+  'TH-CMP-SLB5': 'https://images.unsplash.com/photo-1526585772182-ab79aa8b4d13?w=400&h=300&fit=crop',
+  'TH-HYD-B2L':  'https://images.unsplash.com/photo-1523362289600-a70b4a0e09aa?w=400&h=300&fit=crop',
+  'TH-HYD-B750': 'https://images.unsplash.com/photo-1523362289600-a70b4a0e09aa?w=400&h=300&fit=crop',
+  'TH-LGT-HL35': 'https://images.unsplash.com/photo-1572978464031-6b9ad8d26c8e?w=400&h=300&fit=crop',
+  'TH-LGT-LAN':  'https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=400&h=300&fit=crop',
+  'TH-CMP-DRY':  'https://images.unsplash.com/photo-1455614018203-f0580fd1e6cf?w=400&h=300&fit=crop',
+};
+
+// Fallback when no curated image exists for an SKU: a deterministic
+// photo via picsum, so the UI never shows a broken image on new products.
+function fallbackImage(sku) {
+  return `https://picsum.photos/seed/${encodeURIComponent(sku)}/400/300`;
+}
+
 /**
  * Compact description of every seeded organization.
  * Each entry: users[], categories[], suppliers[], products[]
@@ -234,6 +283,7 @@ async function seedBusiness(biz) {
       organization: org._id,
       name: p.name,
       sku: p.sku,
+      imageUrl: PRODUCT_IMAGES[p.sku] || fallbackImage(p.sku),
       quantityOnHand: p.quantityOnHand,
       costPrice: p.costPrice,
       sellingPrice: p.sellingPrice,

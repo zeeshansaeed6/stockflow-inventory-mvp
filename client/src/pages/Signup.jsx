@@ -15,7 +15,7 @@ export default function Signup() {
   });
   const [error, setError] = useState('');
 
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/app" replace />;
 
   function update(field) {
     return (e) => setForm({ ...form, [field]: e.target.value });
@@ -30,7 +30,7 @@ export default function Signup() {
     }
     try {
       await signup(form.email, form.password, form.organizationName);
-      navigate('/', { replace: true });
+      navigate('/app', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Signup failed');
     }

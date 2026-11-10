@@ -152,7 +152,7 @@ export default function Products() {
             <IconDownload className="w-4 h-4" />
             <span>Export CSV</span>
           </button>
-          <Link to="/products/new" className="btn-primary inline-flex items-center gap-1.5">
+          <Link to="/app/products/new" className="btn-primary inline-flex items-center gap-1.5">
             <IconPlus className="w-4 h-4" />
             <span>Add product</span>
           </Link>
@@ -193,7 +193,7 @@ export default function Products() {
         ) : filtered.length === 0 ? (
           <div className="p-10 text-center text-slate-500 text-sm">
             No products yet.{' '}
-            <Link to="/products/new" className="text-brand-600 hover:underline">
+            <Link to="/app/products/new" className="text-brand-600 hover:underline">
               Add your first one
             </Link>
             .
@@ -202,6 +202,7 @@ export default function Products() {
           <div className="overflow-x-auto"><table className="min-w-full text-sm">
             <thead className="table-head">
               <tr>
+                <th className="w-16 px-5 py-3"></th>
                 <th
                   className="text-left px-5 py-3 cursor-pointer select-none hover:text-slate-900"
                   onClick={() => toggleSort('name')}
@@ -228,8 +229,17 @@ export default function Products() {
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} className="table-row hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="pl-5 pr-2 py-3">
+                    <img
+                      src={p.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(p.sku)}/80/60`}
+                      alt=""
+                      loading="lazy"
+                      className="w-12 h-9 object-cover rounded border border-slate-200 dark:border-slate-700"
+                      onError={(e) => { e.currentTarget.src = `https://picsum.photos/seed/${encodeURIComponent(p.sku)}/80/60`; }}
+                    />
+                  </td>
                   <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">
-                    <Link to={`/products/${p.id}`} className="hover:text-brand-600">
+                    <Link to={`/app/products/${p.id}`} className="hover:text-brand-600">
                       {p.name}
                     </Link>
                     {p.category && (
@@ -285,7 +295,7 @@ export default function Products() {
                   <td className="px-5 py-3 text-right">
                     <div className="inline-flex items-center gap-2">
                       <Link
-                        to={`/products/${p.id}`}
+                        to={`/app/products/${p.id}`}
                         className="btn-secondary inline-flex items-center gap-1.5"
                       >
                         <IconPencil className="w-3.5 h-3.5" />

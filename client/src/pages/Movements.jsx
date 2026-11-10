@@ -66,7 +66,7 @@ export default function Movements() {
                   </td>
                   <td className="px-5 py-3 text-slate-900 dark:text-slate-100">
                     {m.product ? (
-                      <Link to={`/products/${m.product.id}`} className="hover:text-brand-600">
+                      <Link to={`/app/products/${m.product.id}`} className="hover:text-brand-600">
                         {m.product.name}
                       </Link>
                     ) : (
