@@ -24,3 +24,6 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# Personal notes (not for GitHub)
+prep/
