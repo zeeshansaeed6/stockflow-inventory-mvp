@@ -55,15 +55,17 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-slate-100 flex flex-col dark:bg-slate-950 dark:border-r dark:border-slate-800">
-        <div className="px-5 py-4 flex items-center gap-2 border-b border-slate-800">
+      {/* Sidebar — light in light mode, dark in dark mode */}
+      <aside className="w-64 flex flex-col
+                        bg-white text-slate-700 border-r border-slate-200
+                        dark:bg-slate-950 dark:text-slate-100 dark:border-slate-800">
+        <div className="px-5 py-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800">
           <Logo className="w-9 h-9" />
           <div className="leading-tight">
-            <div className="text-lg font-bold">
-              Stock<span className="text-brand-400">Flow</span>
+            <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Stock<span className="text-brand-600 dark:text-brand-400">Flow</span>
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-500">
               Inventory OS
             </div>
           </div>
@@ -85,8 +87,8 @@ export default function Layout() {
                        border border-transparent
                        ${
                          isActive
-                           ? 'bg-slate-800/80 text-white border-slate-700'
-                           : 'text-slate-300 hover:bg-slate-800/50 hover:text-white hover:border-slate-800'
+                           ? 'bg-brand-50 text-brand-700 border-brand-100 dark:bg-slate-800/80 dark:text-white dark:border-slate-700'
+                           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-200 dark:text-slate-300 dark:hover:bg-slate-800/50 dark:hover:text-white dark:hover:border-slate-800'
                        }`
                     }
                   >
@@ -97,7 +99,11 @@ export default function Layout() {
                             isActive ? 'bg-brand-500' : 'bg-transparent'
                           }`}
                         />
-                        <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-brand-400' : ''}`} />
+                        <Icon
+                          className={`w-5 h-5 shrink-0 ${
+                            isActive ? 'text-brand-600 dark:text-brand-400' : ''
+                          }`}
+                        />
                         <span>{item.label}</span>
                       </>
                     )}
@@ -107,7 +113,7 @@ export default function Layout() {
             </div>
           ))}
         </nav>
-        <div className="px-4 py-3 border-t border-slate-800 text-xs text-slate-500">
+        <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500">
           StockFlow · v0.3
         </div>
       </aside>
