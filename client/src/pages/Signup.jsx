@@ -36,12 +36,12 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4">
       <div className="card w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
           Stock<span className="text-brand-600">Flow</span>
         </h1>
-        <p className="text-sm text-slate-500 mb-6">Create your organization account.</p>
+        <p className="text-sm muted mb-6">Create your organization account.</p>
 
         {error && (
           <div className="mb-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm p-3">

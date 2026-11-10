@@ -17,6 +17,8 @@ const empty = {
   costPrice: '',
   sellingPrice: '',
   lowStockThreshold: '',
+  category: '',
+  supplier: '',
 };
 
 export default function ProductForm() {
@@ -28,6 +30,14 @@ export default function ProductForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+
+  // Load ref lists once so the dropdowns are populated.
+  useEffect(() => {
+    api.get('/categories').then((r) => setCategories(r.data)).catch(() => {});
+    api.get('/suppliers').then((r) => setSuppliers(r.data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -43,6 +53,8 @@ export default function ProductForm() {
           costPrice: p.costPrice ?? '',
           sellingPrice: p.sellingPrice ?? '',
           lowStockThreshold: p.lowStockThreshold ?? '',
+          category: p.category?.id || '',
+          supplier: p.supplier?.id || '',
         });
       })
       .catch((err) => setError(err.response?.data?.message || 'Failed to load'))
@@ -64,6 +76,8 @@ export default function ProductForm() {
       sellingPrice: form.sellingPrice === '' ? null : Number(form.sellingPrice),
       lowStockThreshold:
         form.lowStockThreshold === '' ? null : Number(form.lowStockThreshold),
+      category: form.category || null,
+      supplier: form.supplier || null,
     };
   }
 
@@ -174,6 +188,35 @@ export default function ProductForm() {
               onChange={update('sellingPrice')}
               placeholder="optional"
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="label">Category</label>
+            <select
+              className="input"
+              value={form.category}
+              onChange={update('category')}
+            >
+              <option value="">Uncategorised</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Supplier</label>
+            <select
+              className="input"
+              value={form.supplier}
+              onChange={update('supplier')}
+            >
+              <option value="">No supplier</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 

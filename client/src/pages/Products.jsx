@@ -130,8 +130,8 @@ export default function Products() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Products</h1>
-          <p className="text-sm text-slate-500">Manage your inventory.</p>
+          <h1 className="page-title">Products</h1>
+          <p className="muted text-sm">Manage your inventory.</p>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={handleExport} className="btn-secondary">
@@ -181,7 +181,7 @@ export default function Products() {
           </div>
         ) : (
           <div className="overflow-x-auto"><table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600 uppercase text-xs">
+            <thead className="table-head">
               <tr>
                 <th
                   className="text-left px-5 py-3 cursor-pointer select-none hover:text-slate-900"
@@ -208,14 +208,25 @@ export default function Products() {
             </thead>
             <tbody>
               {filtered.map((p) => (
-                <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-5 py-3 font-medium text-slate-900">
+                <tr key={p.id} className="table-row hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">
                     <Link to={`/products/${p.id}`} className="hover:text-brand-600">
                       {p.name}
                     </Link>
+                    {p.category && (
+                      <span
+                        className="chip ml-2"
+                        style={{
+                          backgroundColor: `${p.category.color}20`,
+                          color: p.category.color,
+                        }}
+                      >
+                        {p.category.name}
+                      </span>
+                    )}
                   </td>
-                  <td className="px-5 py-3 text-slate-600">{p.sku}</td>
-                  <td className="px-5 py-3 text-right text-slate-900">
+                  <td className="px-5 py-3 muted">{p.sku}</td>
+                  <td className="px-5 py-3 text-right text-slate-900 dark:text-slate-100">
                     <div className="inline-flex items-center gap-1">
                       <button
                         type="button"
@@ -249,7 +260,7 @@ export default function Products() {
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-3 text-right text-slate-700">
+                  <td className="px-5 py-3 text-right text-slate-700 dark:text-slate-200">
                     {p.sellingPrice != null ? `$${Number(p.sellingPrice).toFixed(2)}` : '—'}
                   </td>
                   <td className="px-5 py-3 text-right space-x-2">

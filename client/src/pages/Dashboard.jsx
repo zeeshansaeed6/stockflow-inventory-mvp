@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 
 // Small summary card used for the top metrics.
-function StatCard({ label, value, hint }) {
+function StatCard({ label, value, hint, accent }) {
   return (
     <div className="card p-5">
-      <div className="text-sm font-medium text-slate-500">{label}</div>
-      <div className="mt-2 text-3xl font-bold text-slate-900">{value}</div>
-      {hint && <div className="text-xs text-slate-400 mt-1">{hint}</div>}
+      <div className="text-sm font-medium muted">{label}</div>
+      <div className={`mt-2 text-3xl font-bold ${accent || 'text-slate-900 dark:text-slate-100'}`}>
+        {value}
+      </div>
+      {hint && <div className="text-xs muted mt-1">{hint}</div>}
     </div>
   );
 }
@@ -49,8 +51,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="page-title">Dashboard</h1>
+        <p className="muted text-sm">
           Overview of your inventory at a glance.
         </p>
       </div>
@@ -62,24 +64,25 @@ export default function Dashboard() {
           label="Low stock items"
           value={data.lowStockCount}
           hint={`Default threshold: ${data.defaultLowStockThreshold}`}
+          accent={data.lowStockCount ? 'text-amber-600 dark:text-amber-400' : undefined}
         />
       </div>
 
       <div className="card">
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Low stock items</h2>
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Low stock items</h2>
           <Link to="/products" className="text-sm text-brand-600 hover:underline">
             View all products →
           </Link>
         </div>
 
         {data.lowStockItems.length === 0 ? (
-          <div className="p-6 text-sm text-slate-500">
+          <div className="p-6 text-sm muted">
             No low-stock products. All good!
           </div>
         ) : (
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600 uppercase text-xs">
+            <thead className="table-head">
               <tr>
                 <th className="text-left px-5 py-3">Name</th>
                 <th className="text-left px-5 py-3">SKU</th>
@@ -89,8 +92,8 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {data.lowStockItems.map((item) => (
-                <tr key={item.id} className="border-t border-slate-100">
-                  <td className="px-5 py-3 text-slate-900">
+                <tr key={item.id} className="table-row">
+                  <td className="px-5 py-3 text-slate-900 dark:text-slate-100">
                     <Link
                       to={`/products/${item.id}`}
                       className="hover:text-brand-600"
@@ -98,11 +101,11 @@ export default function Dashboard() {
                       {item.name}
                     </Link>
                   </td>
-                  <td className="px-5 py-3 text-slate-600">{item.sku}</td>
-                  <td className="px-5 py-3 text-right text-red-600 font-semibold">
+                  <td className="px-5 py-3 muted">{item.sku}</td>
+                  <td className="px-5 py-3 text-right text-red-600 dark:text-red-400 font-semibold">
                     {item.quantityOnHand}
                   </td>
-                  <td className="px-5 py-3 text-right text-slate-600">
+                  <td className="px-5 py-3 text-right muted">
                     {item.lowStockThreshold}
                   </td>
                 </tr>
