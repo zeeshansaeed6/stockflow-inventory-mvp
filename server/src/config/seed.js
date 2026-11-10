@@ -319,10 +319,17 @@ async function seedBusiness(biz) {
   return { org, users };
 }
 
-async function seedDemo() {
-  // Skip if anything is already seeded (idempotent-ish for restarts).
-  const existing = await Organization.findOne();
-  if (existing) return;
+// options.force: seed demo accounts even if other organizations already exist
+// (used to add demo data to a database that already has real signups).
+// Still idempotent: does nothing if the demo accounts are already there.
+async function seedDemo(options = {}) {
+  if (options.force) {
+    if (await User.exists({ email: DEMO_EMAIL })) return;
+  } else {
+    // Skip if anything is already seeded (idempotent-ish for restarts).
+    const existing = await Organization.findOne();
+    if (existing) return;
+  }
 
   // Keep the original simple demo login working for backwards-compat.
   const legacyOrg = await Organization.create({
