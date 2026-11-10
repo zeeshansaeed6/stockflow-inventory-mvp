@@ -159,4 +159,57 @@ async function adjust(req, res, next) {
   }
 }
 
-module.exports = { list, getOne, create, update, remove, adjust };
+// Escape a cell so commas, quotes and newlines survive the CSV round-trip.
+function csvCell(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+// GET /api/products/export.csv
+// Streams a CSV of all products in the caller's organization.
+async function exportCsv(req, res, next) {
+  try {
+    const products = await Product.find({ organization: req.auth.organizationId }).sort({
+      name: 1,
+    });
+
+    const header = [
+      'Name',
+      'SKU',
+      'Description',
+      'QuantityOnHand',
+      'CostPrice',
+      'SellingPrice',
+      'LowStockThreshold',
+      'UpdatedAt',
+    ].join(',');
+
+    const rows = products.map((p) =>
+      [
+        p.name,
+        p.sku,
+        p.description,
+        p.quantityOnHand,
+        p.costPrice,
+        p.sellingPrice,
+        p.lowStockThreshold,
+        p.updatedAt?.toISOString(),
+      ]
+        .map(csvCell)
+        .join(','),
+    );
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="products-${new Date().toISOString().slice(0, 10)}.csv"`,
+    );
+    return res.send([header, ...rows].join('\n'));
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { list, getOne, create, update, remove, adjust, exportCsv };

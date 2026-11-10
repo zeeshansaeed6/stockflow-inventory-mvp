@@ -50,6 +50,24 @@ export default function Products() {
     }
   }
 
+  // Trigger a CSV download via a hidden anchor so the Authorization header
+  // from axios is used to fetch the file first.
+  async function handleExport() {
+    try {
+      const res = await api.get('/products/export.csv', { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `products-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Export failed');
+    }
+  }
+
   // Quick inline +/- adjustment. Keeps the list in sync without a full reload.
   async function handleAdjust(id, delta) {
     try {
@@ -75,9 +93,14 @@ export default function Products() {
           <h1 className="text-2xl font-bold text-slate-900">Products</h1>
           <p className="text-sm text-slate-500">Manage your inventory.</p>
         </div>
-        <Link to="/products/new" className="btn-primary">
-          + Add product
-        </Link>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={handleExport} className="btn-secondary">
+            Export CSV
+          </button>
+          <Link to="/products/new" className="btn-primary">
+            + Add product
+          </Link>
+        </div>
       </div>
 
       <div className="card p-4">

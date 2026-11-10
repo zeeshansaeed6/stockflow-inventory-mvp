@@ -28,6 +28,9 @@ const createValidators = [
 
 router.use(authRequired);
 
+// CSV export must come before '/:id' so Express doesn't treat it as an id.
+router.get('/export.csv', ctrl.exportCsv);
+
 router.get('/', ctrl.list);
 router.post('/', createValidators, ctrl.create);
 router.get('/:id', ctrl.getOne);
