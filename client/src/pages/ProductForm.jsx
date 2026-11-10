@@ -95,7 +95,7 @@ export default function ProductForm() {
       } else {
         await api.post('/products', payload);
       }
-      navigate('/products');
+      navigate('/app/products');
     } catch (err) {
       setError(err.response?.data?.message || 'Save failed');
     } finally {
