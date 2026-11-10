@@ -6,8 +6,12 @@
 
 import axios from 'axios';
 
+// In dev, '/api' is proxied by Vite. In production (e.g. Cloudflare Pages),
+// set VITE_API_URL to the deployed API origin, e.g. https://stockflow-api.onrender.com
+const API_ORIGIN = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${API_ORIGIN}/api`,
 });
 
 api.interceptors.request.use((config) => {
