@@ -13,9 +13,17 @@ const router = express.Router();
 router.post(
   '/signup',
   [
-    body('email').isEmail().withMessage('Valid email required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('organizationName').trim().notEmpty().withMessage('Organization name required'),
+    body('email').isString().isEmail().withMessage('Valid email required'),
+    body('password')
+      .isString()
+      .isLength({ min: 6, max: 72 })
+      .withMessage('Password must be 6-72 characters'),
+    body('organizationName')
+      .isString()
+      .trim()
+      .notEmpty()
+      .isLength({ max: 100 })
+      .withMessage('Organization name required (max 100 characters)'),
   ],
   signup,
 );
@@ -23,8 +31,8 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').isEmail().withMessage('Valid email required'),
-    body('password').notEmpty().withMessage('Password required'),
+    body('email').isString().isEmail().withMessage('Valid email required'),
+    body('password').isString().notEmpty().withMessage('Password required'),
   ],
   login,
 );

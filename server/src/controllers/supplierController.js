@@ -31,10 +31,17 @@ async function list(req, res, next) {
 async function create(req, res, next) {
   try {
     const { name } = req.body;
-    if (!name || !name.trim()) {
+    if (typeof name !== 'string' || !name.trim() || name.length > 100) {
       return res.status(400).json({ message: 'Name is required' });
     }
-    const payload = { ...req.body, organization: req.auth.organizationId };
+    const payload = { organization: req.auth.organizationId };
+    for (const key of ['name', 'contactName', 'email', 'phone', 'notes']) {
+      if (req.body[key] === undefined) continue;
+      if (typeof req.body[key] !== 'string') {
+        return res.status(400).json({ message: `${key} must be text` });
+      }
+      payload[key] = req.body[key];
+    }
     const item = await Supplier.create(payload);
     return res.status(201).json(toDTO(item));
   } catch (err) {
@@ -50,7 +57,11 @@ async function update(req, res, next) {
     const updatable = ['name', 'contactName', 'email', 'phone', 'notes'];
     const patch = {};
     for (const key of updatable) {
-      if (req.body[key] !== undefined) patch[key] = req.body[key];
+      if (req.body[key] === undefined) continue;
+      if (typeof req.body[key] !== 'string' || (key === 'name' && !req.body[key].trim())) {
+        return res.status(400).json({ message: `${key} is invalid` });
+      }
+      patch[key] = req.body[key];
     }
 
     const item = await Supplier.findOneAndUpdate(

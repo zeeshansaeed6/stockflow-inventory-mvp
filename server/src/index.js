@@ -54,6 +54,10 @@ app.use(
     max: 50,
     standardHeaders: true,
     legacyHeaders: false,
+    // Behind Cloudflare the proxy IP varies per request, which split the counter
+    // across buckets. Cloudflare sets CF-Connecting-IP to the real client.
+    keyGenerator: (req) => req.headers['cf-connecting-ip'] || req.ip,
+    validate: { keyGeneratorIpFallback: false },
     message: { message: 'Too many auth attempts, please try again later.' },
   }),
 );
