@@ -23,7 +23,7 @@ export default function Products() {
     const myId = ++reqIdRef.current;
     setLoading(true);
     try {
-      const params = { page: p, pageSize };
+      const params = { page: p, pageSize, sortBy, sortDir };
       if (searchTerm) params.q = searchTerm;
       if (lowOnly) params.lowOnly = 'true';
 
@@ -56,21 +56,13 @@ export default function Products() {
     const t = setTimeout(() => load(query.trim(), page), 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, page, lowOnly]);
+  }, [query, page, lowOnly, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  // Search runs on the server; we only sort the current page locally.
-  const filtered = useMemo(() => {
-    const dir = sortDir === 'asc' ? 1 : -1;
-    const cmp = {
-      name: (a, b) => a.name.localeCompare(b.name),
-      sku: (a, b) => a.sku.localeCompare(b.sku),
-      qty: (a, b) => a.quantityOnHand - b.quantityOnHand,
-      updated: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
-    }[sortBy];
-    return [...products].sort((a, b) => cmp(a, b) * dir);
-  }, [products, sortBy, sortDir]);
+  // Sorting is server-side so pagination is consistent; we use the
+  // list as-is here (kept as a memo for a future local override).
+  const filtered = useMemo(() => products, [products]);
 
   // Toggle sort direction when the same column is clicked again.
   function toggleSort(col) {

@@ -52,10 +52,21 @@ async function list(req, res, next) {
       };
     }
 
+    // Map client sort keys to schema fields; reject anything else.
+    const sortFields = {
+      name: 'name',
+      sku: 'sku',
+      qty: 'quantityOnHand',
+      updated: 'updatedAt',
+      created: 'createdAt',
+    };
+    const sortBy = sortFields[req.query.sortBy] || 'createdAt';
+    const sortDir = req.query.sortDir === 'asc' ? 1 : -1;
+
     const [total, products] = await Promise.all([
       Product.countDocuments(filter),
       Product.find(filter)
-        .sort({ createdAt: -1 })
+        .sort({ [sortBy]: sortDir })
         .skip((page - 1) * pageSize)
         .limit(pageSize),
     ]);
