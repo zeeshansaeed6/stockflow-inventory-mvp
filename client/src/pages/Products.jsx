@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 
@@ -12,37 +12,41 @@ export default function Products() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  async function load() {
+  // Keep the latest request's id so stale responses don't overwrite newer ones.
+  const reqIdRef = useRef(0);
+
+  async function load(searchTerm) {
+    const myId = ++reqIdRef.current;
     setLoading(true);
     try {
-      // Pull the default threshold so the "low" indicator can use it
-      // for products that don't define their own.
-      const [{ data: items }, { data: settings }] = await Promise.all([
-        api.get('/products'),
-        api.get('/settings'),
+      // Pull the default threshold once; search updates only hit /products.
+      const productsReq = api.get('/products', {
+        params: searchTerm ? { q: searchTerm } : {},
+      });
+      const [{ data: items }, settingsRes] = await Promise.all([
+        productsReq,
+        defaultThreshold === 5 && !searchTerm ? api.get('/settings') : Promise.resolve(null),
       ]);
+      if (myId !== reqIdRef.current) return; // a newer request has superseded us
       setProducts(items);
-      setDefaultThreshold(settings.defaultLowStockThreshold);
+      if (settingsRes) setDefaultThreshold(settingsRes.data.defaultLowStockThreshold);
     } catch (err) {
+      if (myId !== reqIdRef.current) return;
       setError(err.response?.data?.message || 'Failed to load products');
     } finally {
-      setLoading(false);
+      if (myId === reqIdRef.current) setLoading(false);
     }
   }
 
+  // Debounce query changes so we don't fire a request on every keystroke.
   useEffect(() => {
-    load();
-  }, []);
+    const t = setTimeout(() => load(query.trim()), 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
-  // Client-side search over name/SKU (nice for small catalogs), then sort.
+  // Search runs on the server; we only sort the current page locally.
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let list = !q
-      ? [...products]
-      : products.filter(
-          (p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
-        );
-
     const dir = sortDir === 'asc' ? 1 : -1;
     const cmp = {
       name: (a, b) => a.name.localeCompare(b.name),
@@ -50,10 +54,8 @@ export default function Products() {
       qty: (a, b) => a.quantityOnHand - b.quantityOnHand,
       updated: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
     }[sortBy];
-
-    list.sort((a, b) => cmp(a, b) * dir);
-    return list;
-  }, [query, products, sortBy, sortDir]);
+    return [...products].sort((a, b) => cmp(a, b) * dir);
+  }, [products, sortBy, sortDir]);
 
   // Toggle sort direction when the same column is clicked again.
   function toggleSort(col) {
