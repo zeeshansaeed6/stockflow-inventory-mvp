@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { Logo } from '../components/icons/index.jsx';
 
 export default function Login() {
   const { user, login, loading } = useAuth();
@@ -26,9 +27,12 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4">
       <div className="card w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
-          Stock<span className="text-brand-600">Flow</span>
-        </h1>
+        <div className="flex items-center gap-3 mb-1">
+          <Logo className="w-10 h-10" />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Stock<span className="text-brand-600">Flow</span>
+          </h1>
+        </div>
         <p className="text-sm muted mb-6">Sign in to your account.</p>
         <div className="mb-4 rounded-md bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/30 text-brand-700 dark:text-brand-200 text-xs p-3">
           Demo login: <code>demo@stockflow.local</code> / <code>demo1234</code>

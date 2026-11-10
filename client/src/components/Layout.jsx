@@ -1,33 +1,45 @@
 /**
  * Shell for authenticated pages: sidebar nav + top bar.
- * Includes dark-mode toggle and grouped nav sections.
+ * Icons come from the shared icon set so the whole UI stays consistent.
  */
 
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
+import {
+  IconDashboard,
+  IconReports,
+  IconHistory,
+  IconBox,
+  IconTag,
+  IconTruck,
+  IconSettings,
+  IconSun,
+  IconMoon,
+  IconLogout,
+  Logo,
+} from './icons/index.jsx';
 
-// Grouped navigation so the sidebar reads like a real app.
 const NAV_SECTIONS = [
   {
     title: 'Overview',
     links: [
-      { to: '/', label: 'Dashboard', end: true, icon: '◧' },
-      { to: '/reports', label: 'Reports', icon: '≡' },
-      { to: '/movements', label: 'Stock history', icon: '⟳' },
+      { to: '/', label: 'Dashboard', end: true, Icon: IconDashboard },
+      { to: '/reports', label: 'Reports', Icon: IconReports },
+      { to: '/movements', label: 'Stock history', Icon: IconHistory },
     ],
   },
   {
     title: 'Catalog',
     links: [
-      { to: '/products', label: 'Products', icon: '◼' },
-      { to: '/categories', label: 'Categories', icon: '◉' },
-      { to: '/suppliers', label: 'Suppliers', icon: '◇' },
+      { to: '/products', label: 'Products', Icon: IconBox },
+      { to: '/categories', label: 'Categories', Icon: IconTag },
+      { to: '/suppliers', label: 'Suppliers', Icon: IconTruck },
     ],
   },
   {
     title: 'Admin',
-    links: [{ to: '/settings', label: 'Settings', icon: '✱' }],
+    links: [{ to: '/settings', label: 'Settings', Icon: IconSettings }],
   },
 ];
 
@@ -45,8 +57,16 @@ export default function Layout() {
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-slate-100 flex flex-col dark:bg-slate-950 dark:border-r dark:border-slate-800">
-        <div className="px-6 py-5 text-xl font-bold border-b border-slate-800">
-          Stock<span className="text-brand-500">Flow</span>
+        <div className="px-5 py-4 flex items-center gap-2 border-b border-slate-800">
+          <Logo className="w-9 h-9" />
+          <div className="leading-tight">
+            <div className="text-lg font-bold">
+              Stock<span className="text-brand-400">Flow</span>
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">
+              Inventory OS
+            </div>
+          </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
           {NAV_SECTIONS.map((section) => (
@@ -55,21 +75,21 @@ export default function Layout() {
                 {section.title}
               </div>
               <div className="space-y-1">
-                {section.links.map((item) => (
+                {section.links.map(({ Icon, ...item }) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition ${
+                      `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
                         isActive
                           ? 'bg-brand-600 text-white'
                           : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                       }`
                     }
                   >
-                    <span className="opacity-70 w-4 text-center">{item.icon}</span>
-                    {item.label}
+                    <Icon className="w-5 h-5 shrink-0" />
+                    <span>{item.label}</span>
                   </NavLink>
                 ))}
               </div>
@@ -77,7 +97,7 @@ export default function Layout() {
           ))}
         </nav>
         <div className="px-4 py-3 border-t border-slate-800 text-xs text-slate-500">
-          StockFlow · v0.2
+          StockFlow · v0.3
         </div>
       </aside>
 
@@ -91,16 +111,21 @@ export default function Layout() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggle}
-              className="btn-secondary px-3 py-1.5 text-xs"
+              className="btn-secondary px-3 py-1.5 text-xs inline-flex items-center gap-1.5"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
-              {theme === 'dark' ? '☼ Light' : '☾ Dark'}
+              {theme === 'dark' ? <IconSun className="w-4 h-4" /> : <IconMoon className="w-4 h-4" />}
+              <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
             <span className="text-sm text-slate-700 dark:text-slate-200 hidden sm:inline">
               {user?.email}
             </span>
-            <button className="btn-secondary" onClick={handleLogout}>
-              Logout
+            <button
+              className="btn-secondary inline-flex items-center gap-1.5"
+              onClick={handleLogout}
+            >
+              <IconLogout className="w-4 h-4" />
+              <span>Logout</span>
             </button>
           </div>
         </header>
