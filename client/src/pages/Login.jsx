@@ -35,7 +35,7 @@ export default function Login() {
         </div>
         <p className="text-sm muted mb-6">Sign in to your account.</p>
         <div className="mb-4 rounded-md bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/30 text-brand-700 dark:text-brand-200 text-xs p-3">
-          Demo login: <code>demo@stockflow.local</code> / <code>demo1234</code>
+          Demo login: <code>owner@bluespark.demo</code> / <code>demo1234</code>
         </div>
 
         {error && (
