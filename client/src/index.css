@@ -6,34 +6,122 @@
 html.dark { color-scheme: dark; }
 html.dark body { @apply bg-slate-950 text-slate-100; }
 
+/* Scroll-reveal utility: elements start invisible/translated-down and
+   animate in when the .is-visible class is added by IntersectionObserver. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 700ms ease-out, transform 700ms ease-out;
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 100ms; }
+.reveal-delay-2 { transition-delay: 200ms; }
+.reveal-delay-3 { transition-delay: 300ms; }
+.reveal-delay-4 { transition-delay: 400ms; }
+
+/* Gentle floating animation for hero art. */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+.animate-float { animation: float-slow 6s ease-in-out infinite; }
+
+/* Marquee for logo ticker. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 22s linear infinite; }
+
+/* --------------------------------------------------------------------------
+ * Design tokens
+ * A single source of truth for borders, dividers and focus rings so that the
+ * whole UI shares the same hairline language.
+ * ------------------------------------------------------------------------ */
+:root {
+  --sf-border: #e2e8f0;        /* slate-200 */
+  --sf-border-strong: #cbd5e1; /* slate-300 */
+  --sf-border-subtle: #eef2f7; /* between slate-100 and slate-200 */
+  --sf-ring: #3b82f6;          /* brand-500 */
+  --sf-radius: 10px;
+  --sf-radius-sm: 6px;
+}
+html.dark {
+  --sf-border: #1f2937;        /* slate-800 */
+  --sf-border-strong: #334155; /* slate-700 */
+  --sf-border-subtle: #111827; /* slate-900 */
+}
+
 /* Reusable component classes to keep JSX tidy. */
 @layer components {
+  /* Buttons share a consistent 1px bordered shape with a visible focus ring. */
   .btn {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition
-           focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium
+           transition border focus:outline-none focus:ring-2 focus:ring-offset-2
+           disabled:opacity-60 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-500;
+    @apply btn bg-brand-600 text-white border-brand-600 hover:bg-brand-700 hover:border-brand-700
+           focus:ring-brand-500 dark:focus:ring-offset-slate-900;
   }
   .btn-secondary {
-    @apply btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 focus:ring-brand-500
-           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700;
+    @apply btn bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400
+           focus:ring-brand-500
+           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700
+           dark:hover:border-slate-600 dark:focus:ring-offset-slate-900;
   }
   .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+    @apply btn bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700
+           focus:ring-red-500 dark:focus:ring-offset-slate-900;
   }
+
   .input {
     @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
-           placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500
-           dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500;
+           placeholder:text-slate-400 shadow-[inset_0_1px_0_rgba(15,23,42,0.03)]
+           focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30
+           transition
+           dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500
+           dark:shadow-none dark:focus:ring-brand-500/30;
   }
   .label {
     @apply block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300;
   }
+
+  /* Card: a rounded container with a single 1px border and a tiny top accent
+     line that gets a gradient on the first child of its parent group. */
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-slate-200
+    @apply bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)]
            dark:bg-slate-900 dark:border-slate-800;
   }
+  .card-divided > * + * {
+    @apply border-t border-slate-100 dark:border-slate-800;
+  }
+  .card-accent {
+    position: relative;
+  }
+  .card-accent::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    background-image: linear-gradient(90deg, #3b82f6, #8b5cf6 50%, #ec4899);
+  }
+
+  /* Sections of a page: a subtle hairline + title that repeats everywhere. */
+  .section-head {
+    @apply flex items-end justify-between flex-wrap gap-2 pb-3
+           border-b border-slate-200 dark:border-slate-800;
+  }
+  .section-head h2 {
+    @apply text-sm font-semibold uppercase tracking-wider muted;
+  }
+
   .page-title {
     @apply text-2xl font-bold text-slate-900 dark:text-slate-100;
   }
@@ -41,12 +129,42 @@ html.dark body { @apply bg-slate-950 text-slate-100; }
     @apply text-slate-500 dark:text-slate-400;
   }
   .chip {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset;
   }
+
+  /* Tables use hairline row dividers and a shaded header bar. */
   .table-row {
     @apply border-t border-slate-100 dark:border-slate-800;
   }
   .table-head {
-    @apply bg-slate-50 text-slate-600 uppercase text-xs dark:bg-slate-800/50 dark:text-slate-400;
+    @apply bg-slate-50/80 text-slate-600 uppercase text-xs
+           dark:bg-slate-800/40 dark:text-slate-400
+           border-b border-slate-200 dark:border-slate-800;
   }
+
+  /* Form fieldset: groups related inputs behind a single hairline border. */
+  .fieldset {
+    @apply border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-5;
+  }
+  .fieldset-legend {
+    @apply text-xs font-semibold uppercase tracking-wider muted;
+  }
+
+  /* A simple horizontal divider with an optional inline label. */
+  .divider {
+    @apply flex items-center gap-3 text-xs uppercase tracking-wider muted my-4;
+  }
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    @apply border-t border-slate-200 dark:border-slate-800;
+  }
+
+  /* Chip colour variants — ring + text match so they read as "outlined". */
+  .chip-brand   { @apply ring-brand-200 text-brand-700 bg-brand-50 dark:ring-brand-500/30 dark:bg-brand-500/10 dark:text-brand-200; }
+  .chip-success { @apply ring-emerald-200 text-emerald-700 bg-emerald-50 dark:ring-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200; }
+  .chip-warn    { @apply ring-amber-200 text-amber-700 bg-amber-50 dark:ring-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200; }
+  .chip-danger  { @apply ring-red-200 text-red-700 bg-red-50 dark:ring-red-500/30 dark:bg-red-500/10 dark:text-red-200; }
+  .chip-neutral { @apply ring-slate-200 text-slate-700 bg-slate-50 dark:ring-slate-700 dark:bg-slate-800 dark:text-slate-200; }
 }

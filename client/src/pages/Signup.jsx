@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { Logo } from '../components/icons/index.jsx';
 
 export default function Signup() {
   const { user, signup, loading } = useAuth();
@@ -14,7 +15,7 @@ export default function Signup() {
   });
   const [error, setError] = useState('');
 
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/app" replace />;
 
   function update(field) {
     return (e) => setForm({ ...form, [field]: e.target.value });
@@ -29,7 +30,7 @@ export default function Signup() {
     }
     try {
       await signup(form.email, form.password, form.organizationName);
-      navigate('/', { replace: true });
+      navigate('/app', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Signup failed');
     }
@@ -38,9 +39,12 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4">
       <div className="card w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
-          Stock<span className="text-brand-600">Flow</span>
-        </h1>
+        <div className="flex items-center gap-3 mb-1">
+          <Logo className="w-10 h-10" />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Stock<span className="text-brand-600">Flow</span>
+          </h1>
+        </div>
         <p className="text-sm muted mb-6">Create your organization account.</p>
 
         {error && (

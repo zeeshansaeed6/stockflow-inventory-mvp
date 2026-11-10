@@ -16,6 +16,9 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     sku: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
+    // Public image URL; the UI falls back to a stable auto-generated image
+    // (picsum.photos seeded by SKU) when this is empty.
+    imageUrl: { type: String, default: '' },
     quantityOnHand: { type: Number, default: 0, min: 0 },
     costPrice: { type: Number, default: null, min: 0 },
     sellingPrice: { type: Number, default: null, min: 0 },

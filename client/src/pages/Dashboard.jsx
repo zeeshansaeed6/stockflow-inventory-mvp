@@ -5,7 +5,7 @@ import api from '../api/axios';
 // Small summary card used for the top metrics.
 function StatCard({ label, value, hint, accent }) {
   return (
-    <div className="card p-5">
+    <div className="card card-accent p-5">
       <div className="text-sm font-medium muted">{label}</div>
       <div className={`mt-2 text-3xl font-bold ${accent || 'text-slate-900 dark:text-slate-100'}`}>
         {value}
@@ -71,7 +71,7 @@ export default function Dashboard() {
       <div className="card">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h2 className="font-semibold text-slate-900 dark:text-slate-100">Low stock items</h2>
-          <Link to="/products" className="text-sm text-brand-600 hover:underline">
+          <Link to="/app/products" className="text-sm text-brand-600 hover:underline">
             View all products →
           </Link>
         </div>
@@ -95,7 +95,7 @@ export default function Dashboard() {
                 <tr key={item.id} className="table-row">
                   <td className="px-5 py-3 text-slate-900 dark:text-slate-100">
                     <Link
-                      to={`/products/${item.id}`}
+                      to={`/app/products/${item.id}`}
                       className="hover:text-brand-600"
                     >
                       {item.name}

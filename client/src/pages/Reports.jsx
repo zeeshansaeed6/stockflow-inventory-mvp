@@ -12,7 +12,7 @@ function money(n) {
 
 function Stat({ label, value, hint, accent }) {
   return (
-    <div className="card p-5">
+    <div className="card card-accent p-5">
       <div className="text-sm font-medium muted">{label}</div>
       <div className={`mt-2 text-3xl font-bold ${accent || 'text-slate-900 dark:text-slate-100'}`}>
         {value}
@@ -104,7 +104,7 @@ export default function Reports() {
       <div className="card overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h2 className="font-semibold text-slate-900 dark:text-slate-100">Out of stock</h2>
-          <Link to="/products" className="text-sm text-brand-600 hover:underline">
+          <Link to="/app/products" className="text-sm text-brand-600 hover:underline">
             Manage products →
           </Link>
         </div>

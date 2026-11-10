@@ -19,14 +19,19 @@ import Categories from './pages/Categories.jsx';
 import Suppliers from './pages/Suppliers.jsx';
 import Reports from './pages/Reports.jsx';
 import Movements from './pages/Movements.jsx';
+import Home from './pages/Home.jsx';
 
 export default function App() {
   return (
     <Routes>
+      {/* Public pages */}
+      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
+      {/* Authenticated app shell at /app */}
       <Route
+        path="/app"
         element={
           <ProtectedRoute>
             <Layout />
@@ -34,14 +39,14 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/products/new" element={<ProductForm />} />
-        <Route path="/products/:id" element={<ProductForm />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/suppliers" element={<Suppliers />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/movements" element={<Movements />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="products" element={<Products />} />
+        <Route path="products/new" element={<ProductForm />} />
+        <Route path="products/:id" element={<ProductForm />} />
+        <Route path="categories" element={<Categories />} />
+        <Route path="suppliers" element={<Suppliers />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="movements" element={<Movements />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

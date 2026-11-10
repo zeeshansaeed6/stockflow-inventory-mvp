@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import {
+  IconPlus,
+  IconMinus,
+  IconSearch,
+  IconDownload,
+  IconTrash,
+  IconPencil,
+  IconChevronLeft,
+  IconChevronRight,
+} from '../components/icons/index.jsx';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -134,24 +144,33 @@ export default function Products() {
           <p className="muted text-sm">Manage your inventory.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={handleExport} className="btn-secondary">
-            Export CSV
+          <button
+            type="button"
+            onClick={handleExport}
+            className="btn-secondary inline-flex items-center gap-1.5"
+          >
+            <IconDownload className="w-4 h-4" />
+            <span>Export CSV</span>
           </button>
-          <Link to="/products/new" className="btn-primary">
-            + Add product
+          <Link to="/app/products/new" className="btn-primary inline-flex items-center gap-1.5">
+            <IconPlus className="w-4 h-4" />
+            <span>Add product</span>
           </Link>
         </div>
       </div>
 
       <div className="card p-4 flex flex-wrap items-center gap-4">
-        <input
-          className="input max-w-sm"
-          type="text"
-          placeholder="Search by name or SKU…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <label className="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
+        <div className="relative max-w-sm w-full">
+          <IconSearch className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            className="input pl-9"
+            type="text"
+            placeholder="Search by name or SKU…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer select-none">
           <input
             type="checkbox"
             className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
@@ -174,7 +193,7 @@ export default function Products() {
         ) : filtered.length === 0 ? (
           <div className="p-10 text-center text-slate-500 text-sm">
             No products yet.{' '}
-            <Link to="/products/new" className="text-brand-600 hover:underline">
+            <Link to="/app/products/new" className="text-brand-600 hover:underline">
               Add your first one
             </Link>
             .
@@ -183,6 +202,7 @@ export default function Products() {
           <div className="overflow-x-auto"><table className="min-w-full text-sm">
             <thead className="table-head">
               <tr>
+                <th className="w-16 px-5 py-3"></th>
                 <th
                   className="text-left px-5 py-3 cursor-pointer select-none hover:text-slate-900"
                   onClick={() => toggleSort('name')}
@@ -209,16 +229,26 @@ export default function Products() {
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} className="table-row hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="pl-5 pr-2 py-3">
+                    <img
+                      src={p.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(p.sku)}/80/60`}
+                      alt=""
+                      loading="lazy"
+                      className="w-12 h-9 object-cover rounded border border-slate-200 dark:border-slate-700"
+                      onError={(e) => { e.currentTarget.src = `https://picsum.photos/seed/${encodeURIComponent(p.sku)}/80/60`; }}
+                    />
+                  </td>
                   <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">
-                    <Link to={`/products/${p.id}`} className="hover:text-brand-600">
+                    <Link to={`/app/products/${p.id}`} className="hover:text-brand-600">
                       {p.name}
                     </Link>
                     {p.category && (
                       <span
                         className="chip ml-2"
                         style={{
-                          backgroundColor: `${p.category.color}20`,
+                          backgroundColor: `${p.category.color}14`,
                           color: p.category.color,
+                          boxShadow: `inset 0 0 0 1px ${p.category.color}66`,
                         }}
                       >
                         {p.category.name}
@@ -231,10 +261,10 @@ export default function Products() {
                       <button
                         type="button"
                         onClick={() => handleAdjust(p.id, -1)}
-                        className="w-7 h-7 rounded border border-slate-300 text-slate-600 hover:bg-slate-100"
+                        className="w-7 h-7 rounded border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 inline-flex items-center justify-center"
                         title="Decrease by 1"
                       >
-                        −
+                        <IconMinus className="w-3.5 h-3.5" />
                       </button>
                       <span className="w-10 text-center font-medium">
                         {p.quantityOnHand}
@@ -242,34 +272,40 @@ export default function Products() {
                       <button
                         type="button"
                         onClick={() => handleAdjust(p.id, 1)}
-                        className="w-7 h-7 rounded border border-slate-300 text-slate-600 hover:bg-slate-100"
+                        className="w-7 h-7 rounded border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 inline-flex items-center justify-center"
                         title="Increase by 1"
                       >
-                        +
+                        <IconPlus className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </td>
                   <td className="px-5 py-3">
                     {isLow(p) ? (
-                      <span className="inline-flex items-center rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-medium">
-                        Low stock
-                      </span>
+                      <span className="chip chip-danger">Low stock</span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-xs font-medium">
-                        In stock
-                      </span>
+                      <span className="chip chip-success">In stock</span>
                     )}
                   </td>
                   <td className="px-5 py-3 text-right text-slate-700 dark:text-slate-200">
                     {p.sellingPrice != null ? `$${Number(p.sellingPrice).toFixed(2)}` : '—'}
                   </td>
-                  <td className="px-5 py-3 text-right space-x-2">
-                    <Link to={`/products/${p.id}`} className="btn-secondary">
-                      Edit
-                    </Link>
-                    <button className="btn-danger" onClick={() => handleDelete(p.id)}>
-                      Delete
-                    </button>
+                  <td className="px-5 py-3 text-right">
+                    <div className="inline-flex items-center gap-2">
+                      <Link
+                        to={`/app/products/${p.id}`}
+                        className="btn-secondary inline-flex items-center gap-1.5"
+                      >
+                        <IconPencil className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </Link>
+                      <button
+                        className="btn-danger inline-flex items-center gap-1.5"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        <IconTrash className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -286,19 +322,21 @@ export default function Products() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="btn-secondary px-3 py-1 text-xs"
+              className="btn-secondary px-3 py-1 text-xs inline-flex items-center gap-1"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
-              ← Prev
+              <IconChevronLeft className="w-3.5 h-3.5" />
+              <span>Prev</span>
             </button>
             <button
               type="button"
-              className="btn-secondary px-3 py-1 text-xs"
+              className="btn-secondary px-3 py-1 text-xs inline-flex items-center gap-1"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
-              Next →
+              <span>Next</span>
+              <IconChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
