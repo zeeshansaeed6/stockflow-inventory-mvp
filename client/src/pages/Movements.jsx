@@ -7,9 +7,9 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 
 const REASON_STYLE = {
-  create: 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200',
-  adjust: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200',
-  edit: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
+  create: 'chip-brand',
+  adjust: 'chip-warn',
+  edit: 'chip-neutral',
 };
 
 function timeAgo(iso) {

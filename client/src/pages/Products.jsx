@@ -246,8 +246,9 @@ export default function Products() {
                       <span
                         className="chip ml-2"
                         style={{
-                          backgroundColor: `${p.category.color}20`,
+                          backgroundColor: `${p.category.color}14`,
                           color: p.category.color,
+                          boxShadow: `inset 0 0 0 1px ${p.category.color}66`,
                         }}
                       >
                         {p.category.name}
@@ -280,13 +281,9 @@ export default function Products() {
                   </td>
                   <td className="px-5 py-3">
                     {isLow(p) ? (
-                      <span className="inline-flex items-center rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-medium">
-                        Low stock
-                      </span>
+                      <span className="chip chip-danger">Low stock</span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-xs font-medium">
-                        In stock
-                      </span>
+                      <span className="chip chip-success">In stock</span>
                     )}
                   </td>
                   <td className="px-5 py-3 text-right text-slate-700 dark:text-slate-200">

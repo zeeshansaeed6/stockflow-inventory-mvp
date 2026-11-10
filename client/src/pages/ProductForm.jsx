@@ -124,7 +124,9 @@ export default function ProductForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="card p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="card card-accent p-6 space-y-6">
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend px-2">Basics</legend>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="label">Name *</label>
@@ -180,7 +182,10 @@ export default function ProductForm() {
             onChange={update('description')}
           />
         </div>
+        </fieldset>
 
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend px-2">Pricing & stock</legend>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="label">Quantity on hand</label>
@@ -218,6 +223,24 @@ export default function ProductForm() {
           </div>
         </div>
 
+        <div className="max-w-xs">
+          <label className="label">Low stock threshold</label>
+          <input
+            type="number"
+            min="0"
+            className="input"
+            value={form.lowStockThreshold}
+            onChange={update('lowStockThreshold')}
+            placeholder="uses org default"
+          />
+          <p className="text-xs muted mt-1">
+            Leave blank to use the organization default.
+          </p>
+        </div>
+        </fieldset>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend px-2">Classification</legend>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="label">Category</label>
@@ -247,20 +270,7 @@ export default function ProductForm() {
           </div>
         </div>
 
-        <div className="max-w-xs">
-          <label className="label">Low stock threshold</label>
-          <input
-            type="number"
-            min="0"
-            className="input"
-            value={form.lowStockThreshold}
-            onChange={update('lowStockThreshold')}
-            placeholder="uses org default"
-          />
-          <p className="text-xs text-slate-500 mt-1">
-            Leave blank to use the organization default.
-          </p>
-        </div>
+        </fieldset>
 
         <div className="flex items-center gap-3 pt-2">
           <button type="submit" className="btn-primary" disabled={saving}>

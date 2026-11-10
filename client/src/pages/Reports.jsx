@@ -12,7 +12,7 @@ function money(n) {
 
 function Stat({ label, value, hint, accent }) {
   return (
-    <div className="card p-5">
+    <div className="card card-accent p-5">
       <div className="text-sm font-medium muted">{label}</div>
       <div className={`mt-2 text-3xl font-bold ${accent || 'text-slate-900 dark:text-slate-100'}`}>
         {value}

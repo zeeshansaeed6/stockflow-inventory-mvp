@@ -81,15 +81,26 @@ export default function Layout() {
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
-                        isActive
-                          ? 'bg-brand-600 text-white'
-                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                      }`
+                      `relative flex items-center gap-3 pl-4 pr-3 py-2 rounded-md text-sm font-medium transition
+                       border border-transparent
+                       ${
+                         isActive
+                           ? 'bg-slate-800/80 text-white border-slate-700'
+                           : 'text-slate-300 hover:bg-slate-800/50 hover:text-white hover:border-slate-800'
+                       }`
                     }
                   >
-                    <Icon className="w-5 h-5 shrink-0" />
-                    <span>{item.label}</span>
+                    {({ isActive }) => (
+                      <>
+                        <span
+                          className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r ${
+                            isActive ? 'bg-brand-500' : 'bg-transparent'
+                          }`}
+                        />
+                        <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-brand-400' : ''}`} />
+                        <span>{item.label}</span>
+                      </>
+                    )}
                   </NavLink>
                 ))}
               </div>
