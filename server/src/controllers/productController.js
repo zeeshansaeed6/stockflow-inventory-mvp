@@ -21,19 +21,41 @@ function toDTO(p) {
   };
 }
 
-// GET /api/products
+// GET /api/products?q=&page=&pageSize=
+// Returns a paginated, searchable list. Defaults keep backwards-compat
+// for existing clients that don't send pagination params.
 async function list(req, res, next) {
   try {
     const { q } = req.query;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(200, Math.max(1, parseInt(req.query.pageSize, 10) || 50));
+
     const filter = { organization: req.auth.organizationId };
 
-    // Simple search over name or SKU.
     if (q && q.trim()) {
       const regex = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       filter.$or = [{ name: regex }, { sku: regex }];
     }
 
-    const products = await Product.find(filter).sort({ createdAt: -1 });
+    const [total, products] = await Promise.all([
+      Product.countDocuments(filter),
+      Product.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize),
+    ]);
+
+    // Legacy clients expect an array; paginated clients can send ?page=
+    // and get the envelope. Pick based on whether page was explicit.
+    if (req.query.page || req.query.pageSize) {
+      return res.json({
+        items: products.map(toDTO),
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      });
+    }
     return res.json(products.map(toDTO));
   } catch (err) {
     return next(err);
