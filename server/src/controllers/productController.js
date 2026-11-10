@@ -132,4 +132,31 @@ async function remove(req, res, next) {
   }
 }
 
-module.exports = { list, getOne, create, update, remove };
+// POST /api/products/:id/adjust
+// Body: { delta: number, note?: string }
+// Adjusts quantityOnHand by the signed delta, clamped at 0.
+async function adjust(req, res, next) {
+  try {
+    const delta = Number(req.body.delta);
+    if (!Number.isFinite(delta) || delta === 0) {
+      return res.status(400).json({ message: 'delta must be a non-zero number' });
+    }
+
+    const product = await Product.findOne({
+      _id: req.params.id,
+      organization: req.auth.organizationId,
+    });
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const next = Math.max(0, (product.quantityOnHand || 0) + delta);
+    product.quantityOnHand = next;
+    product.lastUpdatedBy = req.auth.userId;
+    await product.save();
+
+    return res.json(toDTO(product));
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { list, getOne, create, update, remove, adjust };

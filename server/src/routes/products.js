@@ -33,5 +33,6 @@ router.post('/', createValidators, ctrl.create);
 router.get('/:id', ctrl.getOne);
 router.put('/:id', productValidators, ctrl.update);
 router.delete('/:id', ctrl.remove);
+router.post('/:id/adjust', ctrl.adjust);
 
 module.exports = router;
