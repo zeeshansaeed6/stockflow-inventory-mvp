@@ -15,6 +15,10 @@ import Dashboard from './pages/Dashboard.jsx';
 import Products from './pages/Products.jsx';
 import ProductForm from './pages/ProductForm.jsx';
 import Settings from './pages/Settings.jsx';
+import Categories from './pages/Categories.jsx';
+import Suppliers from './pages/Suppliers.jsx';
+import Reports from './pages/Reports.jsx';
+import Movements from './pages/Movements.jsx';
 
 export default function App() {
   return (
@@ -33,6 +37,10 @@ export default function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/products/new" element={<ProductForm />} />
         <Route path="/products/:id" element={<ProductForm />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/suppliers" element={<Suppliers />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/movements" element={<Movements />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
 
